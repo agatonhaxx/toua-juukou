@@ -1,0 +1,25 @@
+keys:
+  - &eek age1n5378elj0f6pkyludtlqtnpjs2335wrwecsklmzgf838asyx7f6s74ym2r
+  - &bender age1nalndumtuymsz4v8gnqtns9gfykzwprsy4tq2pgwamjzete5q9pq74v5f0
+  - &ponkotsu age17h72ekfzrn6sd9ywpnt87du32tnrxy9r49yfydje554f4pvcs5us6azkcp
+  - &mac age12dpnp82z5wckv2x4hg6q7m98jrnu6d056vlhep2px3vf5u3eeceq6a7mc0
+  - &wall-e age1muxs363pzdyagcgdq5wqumv773rlffedg0wxw6nl4u59xuht8uzsjt25sm
+
+creation_rules:
+  - path_regex: secrets/eek\.yaml
+    key_groups:
+      - age:
+          - *eek
+          - *bender
+          - *ponkotsu
+          - *mac
+          - *wall-e
+
+  - path_regex: secrets/services/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *eek
+          - *bender
+          - *ponkotsu
+          - *mac
+          - *wall-e

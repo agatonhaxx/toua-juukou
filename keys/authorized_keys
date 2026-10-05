@@ -1,0 +1,18 @@
+# Public keys allowed to log in as `toua.user` on every host in this flake.
+#
+# One key per line, in sshd's own authorized_keys format — `ssh-<type> <base64>
+# [comment]` — so they can be pasted straight out of an existing
+# ~/.ssh/authorized_keys, or appended with `ssh-copy-id`. Blank lines and lines
+# beginning with `#` are ignored; nothing else is.
+#
+# This file is deliberately plaintext. These are public keys, so encrypting them
+# with sops would buy nothing, and it would cost something: a sops secret is only
+# decrypted at activation, but `authorizedKeys.keys` is built at evaluation time,
+# so keys could not be read from one. Keeping them here also means they are baked
+# into the system at build time — which matters on wall-e, where sshd is the only
+# way in and a decryption failure would otherwise lock you out of a fresh box.
+#
+# Adding a key here grants login on every machine, wall-e included.
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC08upQggErarHOM0zCGtjuMdEARHSdL+ZIRONsKR1Vq glenn@bender.huxe.eu
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIwjedFCqTbJLM445wsfuhJSXjJrA0jTnW7kgrCIcIjh glenn@ponkotsu.huxe.eu
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDjwm3EDZPgK3aaTESqKjPa4vs/1qwTVpvC/PpTOvE7t glenn.dahl@svenskaspel.se

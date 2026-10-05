@@ -1,0 +1,13 @@
+# direnv's cached devshell environment.
+.direnv/
+
+# Symlinked into the tree by git-hooks.nix when the devshell is entered.
+.pre-commit-config.yaml
+
+# `nix build` output symlinks.
+result
+result-*
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store

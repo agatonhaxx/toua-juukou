@@ -1,0 +1,20 @@
+# treefmt runs typos with `--write-changes`, so a chance dictionary match inside
+# a long base64 token is not reported — it is rewritten in place. In sops
+# ciphertext that destroys the secret; in an SSH public key it silently breaks
+# the key, which on wall-e is the only way in. Excluded rather than checked.
+#
+# Prose in `secrets/` is still checked.
+[default.extend-words]
+noice = "noice"
+
+[files]
+extend-exclude = [
+  # Ciphertext — the extensions `.sops.yaml` encrypts.
+  "secrets/**/*.yaml",
+  "secrets/**/*.json",
+  "secrets/**/*.env",
+  "secrets/**/*.ini",
+
+  # One public key per line.
+  "keys/authorized_keys",
+]
