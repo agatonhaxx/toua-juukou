@@ -5,8 +5,6 @@
     ./hardware-configuration.nix
   ];
 
-  nixpkgs.config.allowUnfree = true;
-
   # The only `boot.loader` definition: `hardware-configuration.nix` carries the
   # hardware facts and filesystems, this carries boot policy. `/boot` is the ESP
   # declared in ./disko.nix, and the mount point is spelled out because its

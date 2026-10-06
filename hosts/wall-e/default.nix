@@ -8,20 +8,12 @@
   toua = {
     # wall-e is a headless service host. Keep the shared terminal setup, but do
     # not pull graphical applications or media players into its closure.
-    programs.gui.enable = false;
-    fonts.enable = false;
     profiles.headless.enable = true;
-    programs.media.enable = false;
     primaryUser = "eek";
     users.eek.homeModule = ../../user/eek;
 
     domain = "huxe.eu";
     email = "glenn@huxe.eu";
-
-    services.atuin.enable = true;
-    services.acme.enable = true;
-    services.nginx.enable = true;
-    services.vaultwarden.enable = true;
   };
 
   # These NixOS options default to true even without a desktop. They install

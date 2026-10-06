@@ -21,13 +21,11 @@ in
     users."Glenn.Dahl".homeModule = ../../user/eek;
     profiles.mac.enable = true;
     # manageUser = false;
-    mac.homebrew.enable = true;
 
-    # qbittorrent follows `programs.gui.enable` and is not wanted here.
     programs = {
       # keep-sorted start
+      agents.enable = true;
       dev.enable = true;
-      gui.enable = true;
       k8s.enable = true;
       kiwidesk.enable = true;
       qbittorrent.enable = false;

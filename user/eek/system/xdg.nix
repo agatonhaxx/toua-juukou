@@ -6,12 +6,7 @@
   ...
 }:
 let
-  inherit (lib)
-    foldl'
-    genAttrs
-    mkIf
-    optionalAttrs
-    ;
+  inherit (lib) optionalAttrs;
 
   inherit (pkgs.stdenv.hostPlatform) isLinux;
 
@@ -24,72 +19,8 @@ let
   # one of those should get matching behaviour here, not a second opinion taken
   # from the profile enum.
   #
-  # `isLinux` keeps Darwin out: there are no user dirs to create or MIME
-  # handlers to register there, and the X11 and Wine variables below are
-  # meaningless on macOS.
+  # User directories and the X11 and Wine variables below are Linux-specific.
   desktop = isLinux && toua.programs.gui.enable;
-
-  # `nvim`, `com.system76.CosmicFiles` and the Spotify and Discord handlers in
-  # the original config are absent here, so their associations are not carried
-  # over. A MIME type whose handler is not installed does not fall back to
-  # anything — the launch just fails — which makes a stale entry worse than no
-  # entry.
-  #
-  # Each group names the flag that installs its application, so an association
-  # is only written when something can actually serve it.
-  groups = [
-    {
-      enable = toua.programs.chromium.enable;
-      app = "chromium-browser";
-      mimeTypes = [
-        "text/html"
-        "application/pdf"
-        "x-www-browser"
-        "x-scheme-handler/http"
-        "x-scheme-handler/https"
-        "x-scheme-handler/ftp"
-        "x-scheme-handler/about"
-        "x-scheme-handler/unknown"
-      ];
-    }
-    {
-      enable = toua.programs.mediaAssociations.enable;
-      app = "mpv";
-      mimeTypes = [
-        "video/*"
-        "audio/*"
-        "image/*"
-      ];
-    }
-  ];
-
-  # Neovim ships no `.desktop` file of its own — `pkgs.neovim` installs none and
-  # neither does the `nvim-eek` module — so text files have no handler to point
-  # at. One is written below instead of dropping the association.
-  codeMimeTypes = [
-    "application/json"
-    "text/english"
-    "text/plain"
-    "text/x-makefile"
-    "text/x-c++hdr"
-    "text/x-c++src"
-    "text/x-chdr"
-    "text/x-csrc"
-    "text/x-java"
-    "text/x-moc"
-    "text/x-pascal"
-    "text/x-tcl"
-    "text/x-tex"
-    "application/x-shellscript"
-    "text/x-c"
-    "text/x-c++"
-  ];
-
-  associations =
-    foldl' (
-      acc: group: acc // optionalAttrs group.enable (genAttrs group.mimeTypes (_: "${group.app}.desktop"))
-    ) { } groups
-    // optionalAttrs desktop (genAttrs codeMimeTypes (_: "nvim.desktop"));
 in
 {
   home.preferXdgDirectories = true;
@@ -120,28 +51,6 @@ in
     };
 
     mime.enable = desktop;
-
-    mimeApps = mkIf desktop {
-      enable = true;
-      associations.added = associations;
-      defaultApplications = associations;
-    };
-
-    # `terminal = true` rather than naming a terminal in `exec`: neovim is a TUI
-    # and needs one, but which one is the desktop's business. Pinning wezterm
-    # here would break on any host that has a different terminal or none.
-    desktopEntries.nvim = mkIf desktop {
-      name = "Neovim";
-      genericName = "Text Editor";
-      comment = "Edit text files";
-      exec = "nvim %F";
-      terminal = true;
-      categories = [
-        "Utility"
-        "TextEditor"
-      ];
-      mimeType = codeMimeTypes;
-    };
   };
 
   # Keeps the many tools that ignore XDG on their own out of `$HOME`. The list
@@ -151,7 +60,6 @@ in
     # Desktop
     KDEHOME = "${xdgCfg.configHome}/kde";
     # Programs
-    GNUPGHOME = "${xdgCfg.dataHome}/gnupg";
     LESSHISTFILE = "${xdgCfg.dataHome}/less/history";
     STEPPATH = "${xdgCfg.dataHome}/step";
     WAKATIME_HOME = "${xdgCfg.configHome}/wakatime";

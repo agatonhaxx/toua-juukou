@@ -72,7 +72,9 @@ target disk. Do not run it for an ordinary update.
    `modules/programs/gui/`. Both directories are imported wholesale, so the
    file is picked up without a list to edit.
 2. Declare its `toua.programs.<name>.enable` option in the owning module.
-3. Gate its configuration on the corresponding enable option.
+3. Gate its configuration on the corresponding enable option. Keep MIME defaults
+   beside the program configuration and gate them on the active Home Manager
+   program's enable option.
 4. Add its name to a group list in `modules/shared/options.nix`, such as
    `cliProgramNames` or `mediaProgramNames`, if it belongs in a reusable
    baseline that a profile can turn on.
@@ -90,6 +92,14 @@ target disk. Do not run it for an ordinary update.
 5. Use `services.defaults` only for services suitable as a broad baseline. The
    `headless` profile turns the infrastructure services on by default;
    workstation profiles leave them off and hosts enable the ones they need.
+
+Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
+`toua.services.nginx.enable`. Vaultwarden also requires
+`toua.services.kanidm.enable` for SSO. These dependencies must be enabled
+explicitly or through the `headless` profile; missing dependencies fail assertions.
+Set `toua.domain` for the service stack and `toua.email` for the ACME contact.
+Kanidm user email addresses are configured separately under
+`services.kanidm.provision.persons`.
 
 ## Adding a host
 

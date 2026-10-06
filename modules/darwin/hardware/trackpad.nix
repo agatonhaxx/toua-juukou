@@ -1,6 +1,6 @@
 {
   system.defaults = {
-    # enable natural scrolling
+    # disable natural scrolling
     NSGlobalDomain."com.apple.swipescrolldirection" = false;
 
     # disable Force Click lookup
@@ -15,7 +15,7 @@
       # enable two finger right click
       TrackpadRightClick = true;
 
-      # enable three finger drag, disabled so I can swap workspaces with 3 fingers
+      # disable three finger drag so I can swap workspaces with 3 fingers
       TrackpadThreeFingerDrag = false;
     };
   };

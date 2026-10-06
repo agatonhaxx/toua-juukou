@@ -16,7 +16,7 @@
       # disable warning when changing file extension
       FXEnableExtensionChangeWarning = false;
 
-      # hide the quit button on finder
+      # show the Quit menu item in Finder
       QuitMenuItem = true;
 
       # show path bar

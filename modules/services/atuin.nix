@@ -5,10 +5,14 @@
   ...
 }:
 let
-  inherit (import ../shared/lib.nix { inherit lib self; }) mkServiceOption;
+  inherit (import ../shared/lib.nix { inherit lib self; }) mkServiceOption mkWebService;
 
   cfg = config.toua.services.atuin;
   toua = config.toua;
+  web = mkWebService {
+    inherit config;
+    name = "atuin";
+  };
 in
 {
   options.toua.services.atuin = mkServiceOption "atuin" {
@@ -17,35 +21,28 @@ in
     domain = "atuin.${toua.domain}";
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
       {
-        assertion = toua.domain != "";
-        message = ''
-          toua.services.atuin.enable needs toua.domain: atuin serves at
-          atuin.<domain> and its certificate is issued for that name.
-        '';
+        assertions = web.assertions;
       }
-    ];
+      (lib.mkIf web.dependenciesEnabled {
+        services.atuin = {
+          enable = true;
+          inherit (cfg) host port;
+          openRegistration = false;
+          maxHistoryLength = 1024 * 16;
+        };
 
-    services.atuin = {
-      enable = true;
-      inherit (cfg) host port;
-      openRegistration = false;
-      maxHistoryLength = 1024 * 16;
-    };
+        security.acme.certs.${cfg.domain} = web.certificate;
 
-    security.acme.certs.${cfg.domain} = {
-      dnsProvider = "cloudflare";
-      credentialFiles."CLOUDFLARE_DNS_API_TOKEN_FILE" = config.sops.secrets.cloudflare-dns-token.path;
-      group = "nginx";
-    };
+        services.nginx.virtualHosts.${cfg.domain} = {
+          useACMEHost = cfg.domain;
+          forceSSL = true;
 
-    services.nginx.virtualHosts.${cfg.domain} = {
-      useACMEHost = cfg.domain;
-      forceSSL = true;
-
-      locations."/".proxyPass = "http://${cfg.host}:${toString cfg.port}";
-    };
-  };
+          locations."/".proxyPass = "http://${cfg.host}:${toString cfg.port}";
+        };
+      })
+    ]
+  );
 }

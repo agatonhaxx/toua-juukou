@@ -12,4 +12,5 @@
   ];
 
   accounts.calendar.basePath = null;
+  programs.fish.enable = true;
 }

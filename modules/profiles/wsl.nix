@@ -11,6 +11,5 @@ in
     shells.enable = lib.mkDefault true;
     services.defaults.enable = lib.mkDefault true;
     fonts.enable = lib.mkDefault false;
-    programs.niri.enable = lib.mkDefault false;
   };
 }

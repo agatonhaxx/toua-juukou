@@ -35,6 +35,11 @@ in
     };
   };
 
+  # Codex loads global instructions from its home directory.
+  home.file.".codex/AGENTS.md" = lib.mkIf (agentsEnabled && toua.codex.enable) {
+    source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/agents/AGENTS.md";
+  };
+
   # The hook runs before every submitted prompt. The script draws its odds with
   # shuf and exits silently unless it wins, so the usual case costs one process
   # spawn and contributes nothing to the context. A win prints a

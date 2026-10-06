@@ -136,7 +136,6 @@ in
               # Disable autofill
               "AutofillPaymentCardBenefits"
               "AutofillPaymentCvcStorage"
-              "AutofillPaymentCardBenefits"
 
               # Disable third-party cookie deprecation bypasses
               "TpcdHeuristicsGrants"

@@ -28,21 +28,16 @@ in
       default = cfg.profiles.desktop.enable;
     };
 
-    # Only NixOS acts on this — ACME uses it as the contact address, and kanidm
-    # as the mail address of the user it provisions — so it is declared here
-    # rather than in `modules/shared/options.nix`, per the split above. A `user/`
-    # module wanting it on Darwin too (git's `user.email`) would make it shared.
-    #
-    # Optional: lego registers a placeholder when this is null and certificates
-    # still issue, at the cost of a failing renewal announcing itself only by
-    # the certificate going stale.
+    # Only NixOS acts on this: ACME uses it as the contact address.
+    # Required when toua.services.acme.enable is true; otherwise it may be null.
     email = mkOption {
       type = types.nullOr types.str;
       default = null;
       example = "someone@example.com";
       description = ''
-        Personal email address. Used as the ACME contact for this host's
-        certificates and as the mail address of the user kanidm provisions.
+        ACME contact email for this host's certificates. Required when
+        toua.services.acme.enable is true. Kanidm user addresses are configured
+        separately in services.kanidm.provision.persons.
       '';
     };
 

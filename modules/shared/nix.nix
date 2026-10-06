@@ -74,9 +74,6 @@
   };
 
   nixpkgs = {
-    overlays = [
-    ];
-
     config = {
       allowUnfree = true;
       # showDerivationWarnings = ["maintainerless"];

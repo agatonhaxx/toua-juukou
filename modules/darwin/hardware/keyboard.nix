@@ -4,10 +4,10 @@
   # but it's not supported by macOS yet.
   system = {
     keyboard = {
-      enableKeyMapping = true; # enable key mapping so that we can use `option` as `control`
+      enableKeyMapping = true; # enable the configured key mappings
 
       # NOTE: do NOT support remap capslock to both control and escape at the same time
-      remapCapsLockToControl = false; # remap caps lock to control
+      remapCapsLockToControl = false; # disable caps lock to control mapping
       remapCapsLockToEscape = true; # remap caps lock to escape
 
       # swap left command and left alt
@@ -23,7 +23,7 @@
       # Enable keyboard access for controls in dialogs.
       AppleKeyboardUIMode = 2;
 
-      ApplePressAndHoldEnabled = false; # enable press and hold
+      ApplePressAndHoldEnabled = false; # disable the press-and-hold accent menu
       # If you press and hold certain keyboard keys when in a text area, the key’s character begins to repeat.
       # This is very useful for vim users, they use `hjkl` to move cursor.
       # sets how long it takes before it starts repeating.

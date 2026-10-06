@@ -47,6 +47,7 @@ in
     (mkIf osConfig.toua.programs.gui.enable {
       # Papirus icon theme for graphical applications.
       catppuccin.gtk.icon.enable = true;
+      catppuccin.firefox.enable = false;
     })
 
     # qt5ct is not available on Darwin. The app gate also keeps Qt and its

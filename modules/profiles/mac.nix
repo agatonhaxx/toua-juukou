@@ -9,7 +9,6 @@ in
     programs.gui.enable = lib.mkDefault true;
     shells.enable = lib.mkDefault true;
     services.defaults.enable = lib.mkDefault true;
-    programs.niri.enable = lib.mkDefault false;
     fonts.enable = lib.mkDefault true;
   };
 }

@@ -104,9 +104,6 @@ let
     media.enable = mkEnableOption "media applications" // {
       default = cfg.programs.gui.enable;
     };
-    mediaAssociations.enable = mkEnableOption "media file associations" // {
-      default = cfg.programs.gui.enable;
-    };
   };
 
   serviceOptions = {
@@ -175,6 +172,10 @@ in
       };
 
       bash.enable = mkEnableOption "Enable Bash" // {
+        default = cfg.shells.enable;
+      };
+
+      fish.enable = mkEnableOption "Enable Fish" // {
         default = cfg.shells.enable;
       };
 

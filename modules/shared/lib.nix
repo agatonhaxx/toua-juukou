@@ -5,7 +5,12 @@
   self ? null,
 }:
 let
-  inherit (lib) hasSuffix mkEnableOption mkOption types;
+  inherit (lib)
+    hasSuffix
+    mkEnableOption
+    mkOption
+    types
+    ;
 
   /**
     Import every `.nix` file in `dir` as a module.
@@ -36,7 +41,10 @@ let
     ```
   */
   importDir =
-    { dir, exclude ? [ ] }:
+    {
+      dir,
+      exclude ? [ ],
+    }:
     let
       files = builtins.readDir dir;
       skip = [ "default.nix" ] ++ exclude;
@@ -87,6 +95,44 @@ let
     };
 
   /**
+    Shared requirements and Cloudflare certificate settings for a web service.
+    Keep assertions outside the implementation guarded by `dependenciesEnabled`.
+  */
+  mkWebService =
+    { config, name }:
+    let
+      toua = config.toua;
+    in
+    {
+      assertions = [
+        {
+          assertion = toua.domain != "";
+          message = "toua.services.${name}.enable needs toua.domain for its service domain and certificate.";
+        }
+      ]
+      ++
+        map
+          (dependency: {
+            assertion = toua.services.${dependency}.enable;
+            message = "toua.services.${name}.enable needs toua.services.${dependency}.enable.";
+          })
+          [
+            "acme"
+            "nginx"
+          ];
+
+      dependenciesEnabled = toua.services.acme.enable && toua.services.nginx.enable;
+
+      certificate = {
+        dnsProvider = "cloudflare";
+        # lego loads the token file through a systemd credential.
+        credentialFiles."CLOUDFLARE_DNS_API_TOKEN_FILE" = config.sops.secrets.cloudflare-dns-token.path;
+        # nginx must be able to read certificates referenced by useACMEHost.
+        group = "nginx";
+      };
+    };
+
+  /**
     Point a `sops.secrets.<name>` definition at a file under `secrets/`.
 
     `file` is the file name without the `.yaml` extension. `dir` picks the
@@ -129,5 +175,10 @@ let
     // args';
 in
 {
-  inherit importDir mkSecret mkServiceOption;
+  inherit
+    importDir
+    mkSecret
+    mkServiceOption
+    mkWebService
+    ;
 }
