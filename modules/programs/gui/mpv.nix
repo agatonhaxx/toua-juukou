@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   ...
 }:
 let
@@ -12,7 +11,7 @@ let
   ] (_: "mpv.desktop");
 in
 {
-  programs.mpv.enable = lib.mkDefault osConfig.toua.programs.mpv.enable;
+  programs.mpv.enable = lib.mkDefault config.toua.programs.mpv.enable;
 
   xdg.mimeApps = lib.mkIf config.programs.mpv.enable {
     enable = true;

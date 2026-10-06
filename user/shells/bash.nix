@@ -1,4 +1,4 @@
-{ lib, osConfig, ... }:
+{ lib, config, ... }:
 {
-  programs.bash.enable = lib.mkDefault osConfig.toua.shells.bash.enable;
+  programs.bash.enable = lib.mkDefault config.toua.programs.bash.enable;
 }

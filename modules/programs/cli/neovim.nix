@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   ...
 }:
 let
@@ -27,7 +26,7 @@ let
   associations = lib.genAttrs mimeTypes (_: "nvim.desktop");
 in
 {
-  programs.neovim.enable = lib.mkDefault osConfig.toua.programs.neovim.enable;
+  programs.neovim.enable = lib.mkDefault config.toua.programs.neovim.enable;
 
   xdg.mimeApps = lib.mkIf enabled {
     enable = true;

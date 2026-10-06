@@ -2,7 +2,6 @@
   lib,
   pkgs,
   config,
-  osConfig,
   ...
 }:
 let
@@ -10,17 +9,14 @@ let
 
   inherit (pkgs.stdenv.hostPlatform) isLinux;
 
-  toua = osConfig.toua;
+  toua = config.toua;
   home = config.home.homeDirectory;
   xdgCfg = config.xdg;
 
-  # Gated on the granular flags rather than `toua.profiles`. The profiles only
-  # supplies defaults for the `programs` switches — a host that overrides
-  # one of those should get matching behaviour here, not a second opinion taken
-  # from the profile enum.
-  #
+  # Graphical settings are selected explicitly by profiles and can be overridden
+  # by the host or user independently of individual application selections.
   # User directories and the X11 and Wine variables below are Linux-specific.
-  desktop = isLinux && toua.programs.gui.enable;
+  desktop = isLinux && toua.graphical.enable;
 in
 {
   home.preferXdgDirectories = true;

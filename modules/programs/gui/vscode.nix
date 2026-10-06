@@ -1,12 +1,12 @@
 {
   lib,
-  osConfig,
+  config,
   pkgs,
   ...
 }:
 {
   programs.vscode = {
-    enable = lib.mkDefault osConfig.toua.programs.vscode.enable;
+    enable = lib.mkDefault config.toua.programs.vscode.enable;
     package = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin null;
   };
 }

@@ -55,6 +55,29 @@ let
       ) (builtins.attrNames files)
     );
 
+  # Application toggles default to false; groups supply explicit configuration.
+  mkEnableOptions =
+    names:
+    lib.genAttrs names (name: {
+      enable = mkEnableOption name;
+    });
+
+  # Put priority on each leaf so a host can override individual group members.
+  mkDefaults = lib.mapAttrsRecursive (_: value: lib.mkDefault value);
+
+  mkProgramToggles =
+    cfg: names:
+    lib.genAttrs names (name: {
+      enable = lib.mkDefault cfg.${name}.enable;
+    });
+
+  # Explicit mappings cover names such as yq -> yq-go.
+  mkEnabledPackages =
+    cfg: packages:
+    lib.concatMap (name: lib.optional cfg.${name}.enable packages.${name}) (
+      builtins.attrNames packages
+    );
+
   /**
     A quick way to create the standard service options under
     `toua.services.<name>`. Ported from the dotfiles repo.
@@ -177,6 +200,10 @@ in
 {
   inherit
     importDir
+    mkDefaults
+    mkEnableOptions
+    mkEnabledPackages
+    mkProgramToggles
     mkSecret
     mkServiceOption
     mkWebService

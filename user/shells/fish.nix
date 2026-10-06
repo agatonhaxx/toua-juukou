@@ -1,12 +1,12 @@
 {
   lib,
-  osConfig,
+  config,
   pkgs,
   ...
 }:
 {
   programs.fish = {
-    enable = lib.mkDefault osConfig.toua.shells.fish.enable;
+    enable = lib.mkDefault config.toua.programs.fish.enable;
 
     # Addresses $PATH re-ordering by Apple's `path_helper` tool, prioritising Apple’s tools over Nix ones.
     # https://github.com/LnL7/nix-darwin/issues/122

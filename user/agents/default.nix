@@ -1,16 +1,14 @@
 {
   config,
   lib,
-  osConfig,
   ...
 }:
 let
-  toua = osConfig.toua.programs;
   # Both the rules file and the hook are only meaningful where the agent
   # programs themselves are installed.
-  agentsEnabled = toua.agents.enable;
+  agentsEnabled = config.programs.codex.enable || config.programs.claude-code.enable;
 
-  # Every agent in `agentProgramNames` exposes the same prompt-submission event
+  # Each supported agent exposes the same prompt-submission event
   # and the same `systemMessage` output shape, so one handler entry serves them
   # all. Adding a third agent means adding its wiring below.
   factHook = [
@@ -36,7 +34,7 @@ in
   };
 
   # Codex loads global instructions from its home directory.
-  home.file.".codex/AGENTS.md" = lib.mkIf (agentsEnabled && toua.codex.enable) {
+  home.file.".codex/AGENTS.md" = lib.mkIf config.programs.codex.enable {
     source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/agents/AGENTS.md";
   };
 
@@ -49,7 +47,7 @@ in
   # Managing settings.json at all takes ~/.claude/settings.json out of the
   # user's hands, so the theme the hand-written file used to set is carried
   # over.
-  programs.claude-code.settings = lib.mkIf (agentsEnabled && toua.claude-code.enable) {
+  programs.claude-code.settings = lib.mkIf config.programs.claude-code.enable {
     theme = "auto";
     hooks.UserPromptSubmit = factHook;
   };
@@ -57,7 +55,7 @@ in
   # Codex reads the same structure from CODEX_HOME/hooks.json. Its hooks are on
   # by default, but it asks the user to trust a hook before running it, so this
   # one has to be accepted once via Codex's `/hooks`.
-  programs.codex.hooks = lib.mkIf (agentsEnabled && toua.codex.enable) {
+  programs.codex.hooks = lib.mkIf config.programs.codex.enable {
     UserPromptSubmit = factHook;
   };
 }

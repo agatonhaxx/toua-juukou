@@ -18,25 +18,56 @@ Hosts select a machine profile:
 toua.profiles.desktop.enable = true;
 ```
 
-Profiles provide grouped defaults and platform policy:
+All `toua.programs.<name>.enable` and `toua.services.<name>.enable` options
+default to false. `modules/groups.nix` holds reusable selections with the same
+shape regardless of whether a tool uses Home Manager, a package, Homebrew, or a
+service module:
 
 ```nix
-toua.programs.defaults.enable = true;
-toua.programs.gui.enable = true;
-toua.services.defaults.enable = true;
+dev.programs = {
+  just.enable = true;
+  jq.enable = true;
+};
+server.services = {
+  nginx.enable = true;
+  atuin.enable = true;
+};
 ```
 
-Reusable defaults feed profiles; profiles can adapt those defaults and settings
-to their platform. User configuration owns personal application preferences.
-The host is the final authority on whether a program, service, or setting applies
-to that machine, and can override profile values.
+Profiles compose groups using the helpers in `modules/shared/lib.nix`:
 
-Individual programs and services remain opt-in unless a profile provides a
-default. Profiles use `lib.mkDefault`, so host values take precedence. The
-`programs.gui` group controls GUI defaults. The `headless` profile enables the
-full set of infrastructure services (`acme`, `atuin`, `borgbackup`, `kanidm`,
-`nginx`, `vaultwarden`) on top of the Tailscale service default; the workstation
-profiles leave those off and hosts enable the ones they need individually.
+```nix
+config.toua = lib.mkIf cfg.enable (lib.mkMerge [
+  (mkDefaults groups.cli)
+  (mkDefaults groups.dev)
+  (mkDefaults groups.network)
+]);
+```
+
+`mkDefaults` applies `lib.mkDefault` to each setting. Hosts override individual
+settings with ordinary assignments, for example `toua.programs.just.enable = false;`.
+Group selection is explicit; there are no group enable switches. The desktop and
+Mac profiles select CLI, GUI, media, and network groups; WSL selects CLI and
+network; headless additionally selects the server group.
+
+Home Manager declares corresponding user-owned `toua.programs` options in
+`user/options.nix` and inherits the effective host selections as defaults. User
+modules can override these and configure native application options:
+
+```nix
+toua.programs.jq.enable = false;
+programs.atuin.settings.auto_sync = true;
+```
+
+Machine services and Homebrew installations resolve at profile → host level.
+Home Manager programs and packages (including Flow) resolve at
+profile → host → user level. On Darwin, enabling user configuration for Firefox,
+Chromium, VS Code, or KiwiDesk requires the application to be installed at host
+level; disabling its user configuration does not uninstall the cask.
+
+`toua.graphical.enable` controls graphical user settings independently of program
+selection. `toua.fonts.enable` controls fonts. Both are false unless explicitly
+selected by a profile, host, or user.
 
 ## Hosts
 
@@ -69,26 +100,23 @@ target disk. Do not run it for an ordinary update.
 
 ## Adding or changing a program
 
-1. Add the application module under `modules/programs/cli/` or
-   `modules/programs/gui/`. Both directories are imported wholesale, so the
-   file is picked up without a list to edit.
-2. Declare grouped `toua.programs.<name>.enable` options through the lists in
-   `modules/shared/options.nix`. Darwin-only cask options belong in their
-   `modules/programs/homebrew/` modules so they are only exposed on Darwin.
-3. Gate its configuration on the corresponding enable option. Keep MIME defaults
-   beside the program configuration and gate them on the active Home Manager
-   program's enable option.
-4. Add its name to a group list in `modules/shared/options.nix`, such as
-   `cliProgramNames` or `mediaProgramNames`, if it belongs in a reusable
-   baseline that a profile can turn on.
-5. Add or override it in a machine profile, then override it for a host when
-   platform or machine constraints require it.
+1. Add its name to a program group in `modules/groups.nix`, or declare an
+   ungrouped option in `modules/shared/options.nix`. Darwin-only cask options are
+   declared in `modules/darwin/options.nix`.
+2. For simple Home Manager toggles, add its name to
+   `modules/programs/cli/defaults.nix` or `gui/defaults.nix`. Package-only tools
+   use the explicit package mappings; simple casks use `homebrew/defaults.nix`.
+3. Keep dedicated modules for additional behavior, platform handling, and MIME
+   associations. Home Manager implementations read `config.toua.programs`;
+   machine implementations read their system `config.toua.programs`.
+4. Select the group in a profile or host, then override individual toggles and
+   native options at host or user level as appropriate.
 
 Custom builds live under `pkgs/<name>/package.nix` and are exposed through
 `pkgs/overlay.nix`. Flow is available as `pkgs.flow` and `nix build .#flow` on
-Intel and ARM Linux/macOS. `toua.programs.flow.enable` installs it system-wide;
-its default follows the media group. Linux uses the upstream Debian package with
-Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
+Intel and ARM Linux/macOS. `toua.programs.flow.enable` installs it for the user;
+profiles select it through the media group. Linux uses the upstream Debian
+package with Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
 
 ## Adding or changing a service
 
@@ -98,9 +126,9 @@ Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
 4. On NixOS nothing else is needed: `modules/services/nixos.nix` imports every
    sibling file. Darwin services are listed by hand in
    `modules/services/default.nix`.
-5. Use `services.defaults` only for services suitable as a broad baseline. The
-   `headless` profile turns the infrastructure services on by default;
-   workstation profiles leave them off and hosts enable the ones they need.
+5. Add suitable services to a group in `modules/groups.nix` and select it in a
+   profile or host. The `network` group selects Tailscale; `server` selects the
+   infrastructure stack. Service enable options always default to false.
 
 Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
 `toua.services.nginx.enable`. Vaultwarden also requires
@@ -247,8 +275,5 @@ Service URLs:
   `secrets/services/borg/<host>/…` paths the module expects.
 - **Bitwarden SSH agent.** `user/eek/system/env.nix` still carries a `REPLACE-ME`
   socket path for the Bitwarden desktop agent on macOS.
-- **Services are not grouped like programs.** Only `services.defaults` exists,
-  and it currently drives just the Tailscale default; the infrastructure services
-  are enabled per profile or host instead.
 
 See [TODO.md](TODO.md) for the scheduled work.

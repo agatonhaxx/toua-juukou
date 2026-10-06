@@ -2,7 +2,6 @@
   lib,
   config,
   inputs,
-  osConfig,
   pkgs,
   inputs',
   ...
@@ -44,7 +43,7 @@ in
       palette = lib.importJSON (config.catppuccin.sources.palette + "/palette.json");
     }
 
-    (mkIf osConfig.toua.programs.gui.enable {
+    (mkIf config.toua.graphical.enable {
       # Papirus icon theme for graphical applications.
       catppuccin.gtk.icon.enable = true;
       catppuccin.firefox.enable = false;
@@ -52,7 +51,7 @@ in
 
     # qt5ct is not available on Darwin. The app gate also keeps Qt and its
     # configuration tools out of headless Linux hosts.
-    (mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.toua.programs.gui.enable) {
+    (mkIf (pkgs.stdenv.hostPlatform.isLinux && config.toua.graphical.enable) {
       catppuccin = {
         # Qt apps need the Home Manager Qt module with qtct as platform theme.
         # Kvantum is opted out because it conflicts with qt5ct (it requires

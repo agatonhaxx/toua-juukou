@@ -1,11 +1,11 @@
 {
   lib,
   pkgs,
-  osConfig,
+  config,
   ...
 }:
 {
-  config = lib.mkIf osConfig.toua.fonts.enable {
+  config = lib.mkIf config.toua.fonts.enable {
     home.packages = with pkgs; [
       # keep-sorted start
       departure-mono

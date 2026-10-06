@@ -8,16 +8,13 @@ let
 in
 {
   # `lib.nix` holds helpers rather than a module, so it is skipped.
-  imports = [
-    ../programs/flow.nix
-  ]
-  ++ importDir {
+  imports = importDir {
     dir = ./.;
     exclude = [ "lib.nix" ];
   };
 
-  programs.fish.enable = true;
-  programs.fish.useBabelfish = true;
+  programs.fish.enable = lib.mkDefault config.toua.programs.fish.enable;
+  programs.fish.useBabelfish = lib.mkDefault config.toua.programs.fish.enable;
 
   # Both NixOS and nix-darwin declare this option, so it can be set from the
   # shared module rather than repeated per platform.

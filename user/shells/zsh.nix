@@ -1,4 +1,4 @@
-{ lib, osConfig, ... }:
+{ lib, config, ... }:
 {
-  programs.zsh.enable = lib.mkDefault osConfig.toua.shells.zsh.enable;
+  programs.zsh.enable = lib.mkDefault config.toua.programs.zsh.enable;
 }

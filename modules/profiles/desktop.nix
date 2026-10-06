@@ -1,16 +1,24 @@
 { config, lib, ... }:
 let
   cfg = config.toua.profiles.desktop;
+  groups = import ../groups.nix;
+  inherit (import ../shared/lib.nix { inherit lib; }) mkDefaults;
 in
 {
   options.toua.profiles.desktop.enable = lib.mkEnableOption "the desktop workstation machine profile";
 
-  config.toua = lib.mkIf cfg.enable {
-    programs.defaults.enable = lib.mkDefault true;
-    programs.gui.enable = lib.mkDefault true;
-    shells.enable = lib.mkDefault true;
-    services.defaults.enable = lib.mkDefault true;
-    programs.niri.enable = lib.mkDefault true;
-    fonts.enable = lib.mkDefault true;
-  };
+  config.toua = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      (mkDefaults groups.cli)
+      (mkDefaults groups.gui)
+      (mkDefaults groups.media)
+      (mkDefaults groups.network)
+      (mkDefaults {
+        programs.niri.enable = true;
+        desktop.gnome.enable = true;
+        desktop.niri.enable = true;
+        displayManager.gdm.enable = true;
+      })
+    ]
+  );
 }

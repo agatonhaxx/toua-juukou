@@ -1,7 +1,7 @@
 {
   inputs,
   lib,
-  osConfig,
+  config,
   ...
 }:
 {
@@ -11,5 +11,5 @@
 
   # nvim-eek provides its own launcher and installation.
   programs.neovim.enable = false;
-  programs.nvim-eek.enable = lib.mkDefault osConfig.toua.programs.neovim.enable;
+  programs.nvim-eek.enable = lib.mkDefault config.toua.programs.neovim.enable;
 }

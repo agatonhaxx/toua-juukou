@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  osConfig,
   pkgs,
   ...
 }:
@@ -19,7 +18,7 @@ let
 in
 {
   programs.chromium = {
-    enable = lib.mkDefault osConfig.toua.programs.chromium.enable;
+    enable = lib.mkDefault config.toua.programs.chromium.enable;
     # Chromium's Nix package is Linux-only; Darwin uses the native cask.
     package = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin null;
   };

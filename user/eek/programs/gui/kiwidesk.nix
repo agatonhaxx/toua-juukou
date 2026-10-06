@@ -1,12 +1,11 @@
 {
   lib,
-  osConfig,
   pkgs,
   config,
   ...
 }:
 let
-  enabled = pkgs.stdenv.hostPlatform.isDarwin && osConfig.toua.programs.kiwidesk.enable;
+  enabled = pkgs.stdenv.hostPlatform.isDarwin && config.toua.programs.kiwidesk.enable;
   colors = config.palette.mocha.colors;
   appRules = {
     "com.github.wez.wezterm" = 1;

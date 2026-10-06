@@ -4,6 +4,8 @@
   ...
 }:
 let
+  groups = import ../../modules/groups.nix;
+  inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
   # The machine name and the work identity must never sit next to each other in
   # this public repository, so both live encrypted in `secrets/eek.yaml` and are
   # rendered at activation. The repository only holds the key names. sops-nix
@@ -16,22 +18,24 @@ in
     ../../user
   ];
 
-  toua = {
-    primaryUser = "Glenn.Dahl";
-    users."Glenn.Dahl".homeModule = ../../user/eek;
-    profiles.mac.enable = true;
-    # manageUser = false;
+  toua = lib.mkMerge [
+    (mkDefaults groups.agents)
+    (mkDefaults groups.dev)
+    (mkDefaults groups.k8s)
+    {
+      primaryUser = "Glenn.Dahl";
+      users."Glenn.Dahl".homeModule = ../../user/eek;
+      profiles.mac.enable = true;
+      # manageUser = false;
 
-    programs = {
-      # keep-sorted start
-      agents.enable = true;
-      dev.enable = true;
-      k8s.enable = true;
-      kiwidesk.enable = true;
-      qbittorrent.enable = false;
-      # keep-sorted end
-    };
-  };
+      programs = {
+        # keep-sorted start
+        kiwidesk.enable = true;
+        qbittorrent.enable = false;
+        # keep-sorted end
+      };
+    }
+  ];
 
   users = {
     users."Glenn.Dahl".uid = 502;

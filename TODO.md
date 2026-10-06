@@ -18,14 +18,10 @@ scheduled.
 
 ### Structure / consistency
 
-- `cliProgramNames` populates `toua.programs.defaults` — the list name does not
-  match the group name.
 - `modules/darwin/options.nix` namespaces `toua.mac.*` while the Linux-only
   options are flat (`toua.email`, `toua.desktop.*`).
 - `modules/shared/users.nix` and `user/default.nix` independently re-implement
   the managedUser + primaryUser union.
-- `mkServiceOption` defaults enable to false, so `services.defaults` effectively
-  controls only `tailscale`.
 
 ### Dead code / docs
 

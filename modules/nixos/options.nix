@@ -1,8 +1,6 @@
-{ lib, config, ... }:
+{ lib, ... }:
 let
   inherit (lib) mkEnableOption mkOption types;
-
-  cfg = config.toua;
 in
 {
   # Declared here rather than in `modules/shared/options.nix` on purpose: these
@@ -12,21 +10,15 @@ in
   # an evaluation error rather than a silent no-op.
   options.toua = {
     desktop = {
-      gnome.enable = mkEnableOption "Enable the GNOME desktop" // {
-        default = cfg.profiles.desktop.enable;
-      };
+      gnome.enable = mkEnableOption "Enable the GNOME desktop";
 
       # Registers the niri session with the display manager and sets up its
       # portals. The window manager's *user* configuration — config.kdl,
       # waybar, fuzzel, mako — is the separate `toua.programs.niri.enable`.
-      niri.enable = mkEnableOption "Register the niri session" // {
-        default = cfg.profiles.desktop.enable;
-      };
+      niri.enable = mkEnableOption "Register the niri session";
     };
 
-    displayManager.gdm.enable = mkEnableOption "Enable the GDM display manager" // {
-      default = cfg.profiles.desktop.enable;
-    };
+    displayManager.gdm.enable = mkEnableOption "Enable the GDM display manager";
 
     # Only NixOS acts on this: ACME uses it as the contact address.
     # Required when toua.services.acme.enable is true; otherwise it may be null.

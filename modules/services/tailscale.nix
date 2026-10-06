@@ -8,9 +8,7 @@ let
   cfg = config.toua.services.tailscale;
 in
 {
-  options.toua.services.tailscale.enable = lib.mkEnableOption "the Tailscale service" // {
-    default = config.toua.services.defaults.enable;
-  };
+  options.toua.services.tailscale.enable = lib.mkEnableOption "the Tailscale service";
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [

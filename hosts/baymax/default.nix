@@ -1,3 +1,8 @@
+{ lib, ... }:
+let
+  groups = import ../../modules/groups.nix;
+  inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
+in
 {
   imports = [
     ../../user
@@ -35,16 +40,16 @@
 
   services.avahi.ipv6 = false;
 
-  toua = {
-    profiles.desktop.enable = true;
-    programs = {
-      dev.enable = true;
-      agents.enable = true;
-    };
+  toua = lib.mkMerge [
+    (mkDefaults groups.dev)
+    (mkDefaults groups.agents)
+    {
+      profiles.desktop.enable = true;
 
-    primaryUser = "eek";
-    users.eek.homeModule = ../../user/eek;
-  };
+      primaryUser = "eek";
+      users.eek.homeModule = ../../user/eek;
+    }
+  ];
 
   services.openssh = {
     enable = true;
