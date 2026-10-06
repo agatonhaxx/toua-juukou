@@ -6,6 +6,7 @@ My Nix configuration for all my machines.
 
 - `hosts/` says what is special about each machine.
 - `modules/` contains profiles, hardware, services, and shared system options.
+- `pkgs/` contains custom package builds and the shared Nixpkgs overlay.
 - `user/` contains Home Manager applications and settings.
 - `secrets/` contains only SOPS-encrypted secrets.
 
@@ -71,7 +72,9 @@ target disk. Do not run it for an ordinary update.
 1. Add the application module under `modules/programs/cli/` or
    `modules/programs/gui/`. Both directories are imported wholesale, so the
    file is picked up without a list to edit.
-2. Declare its `toua.programs.<name>.enable` option in the owning module.
+2. Declare grouped `toua.programs.<name>.enable` options through the lists in
+   `modules/shared/options.nix`. Darwin-only cask options belong in their
+   `modules/programs/homebrew/` modules so they are only exposed on Darwin.
 3. Gate its configuration on the corresponding enable option. Keep MIME defaults
    beside the program configuration and gate them on the active Home Manager
    program's enable option.
@@ -80,6 +83,12 @@ target disk. Do not run it for an ordinary update.
    baseline that a profile can turn on.
 5. Add or override it in a machine profile, then override it for a host when
    platform or machine constraints require it.
+
+Custom builds live under `pkgs/<name>/package.nix` and are exposed through
+`pkgs/overlay.nix`. Flow is available as `pkgs.flow` and `nix build .#flow` on
+Intel and ARM Linux/macOS. `toua.programs.flow.enable` installs it system-wide;
+its default follows the media group. Linux uses the upstream Debian package with
+Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
 
 ## Adding or changing a service
 

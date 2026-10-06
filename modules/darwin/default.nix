@@ -4,7 +4,6 @@
     ../profiles/mac.nix
     ../services
     ./brew
-    ./flow.nix
     ./hardware
     ./options.nix
     ./preferences

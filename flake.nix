@@ -92,6 +92,8 @@
         # keep-sorted end
       ];
 
+      flake.overlays.default = import ./pkgs/overlay.nix;
+
       perSystem =
         { config, pkgs, ... }:
         let
@@ -107,6 +109,8 @@
           '';
         in
         {
+          packages.flow = pkgs.callPackage ./pkgs/flow/package.nix { };
+
           # Exposed as the flake `formatter`, so `nix fmt` and the `treefmt` from
           # the devshell below run the exact same formatters over the same tree.
           treefmt = {

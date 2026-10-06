@@ -18,9 +18,6 @@ scheduled.
 
 ### Structure / consistency
 
-- Option declaration is split: `bitwarden`, `raycast`, and `sf-symbols`
-  self-declare `toua.programs.*` in their homebrew modules while everything else
-  is centralized in `options.nix`.
 - `cliProgramNames` populates `toua.programs.defaults` — the list name does not
   match the group name.
 - `modules/darwin/options.nix` namespaces `toua.mac.*` while the Linux-only

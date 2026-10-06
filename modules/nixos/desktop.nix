@@ -14,6 +14,13 @@ in
   imports = [ inputs.catppuccin.nixosModules.catppuccin ];
 
   config = lib.mkMerge [
+    {
+      catppuccin = {
+        enable = true;
+        autoEnable = cfg.desktop.gnome.enable;
+      };
+    }
+
     (lib.mkIf cfg.displayManager.gdm.enable {
       services.displayManager.gdm.enable = true;
     })
@@ -25,7 +32,6 @@ in
       # profile. catppuccin/nix has no libadwaita/GNOME Shell theming module;
       # these two ports are the full extent of its GNOME integration.
       catppuccin = {
-        enable = true;
         flavor = "mocha";
         accent = "mauve";
         cursors.enable = true;

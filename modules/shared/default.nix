@@ -8,7 +8,10 @@ let
 in
 {
   # `lib.nix` holds helpers rather than a module, so it is skipped.
-  imports = importDir {
+  imports = [
+    ../programs/flow.nix
+  ]
+  ++ importDir {
     dir = ./.;
     exclude = [ "lib.nix" ];
   };

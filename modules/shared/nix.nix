@@ -12,8 +12,6 @@
 
     package = pkgs.lixPackageSets.stable.lix;
 
-    nixPath = [ "nixpkgs=${inputs.nixpkgs.outPath}" ];
-
     gc = {
       automatic = true;
       options = "--delete-older-than 3d";
@@ -33,6 +31,7 @@
     );
 
     settings = {
+      nix-path = [ "nixpkgs=${inputs.nixpkgs.outPath}" ];
       experimental-features = [
         # keep-sorted start
         "flakes"
@@ -74,6 +73,7 @@
   };
 
   nixpkgs = {
+    overlays = [ (import ../../pkgs/overlay.nix) ];
     config = {
       allowUnfree = true;
       # showDerivationWarnings = ["maintainerless"];
