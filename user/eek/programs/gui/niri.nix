@@ -260,6 +260,34 @@ in
       invisible
     '';
 
+    # Pull every window off the other monitors onto the focused one. Bound to
+    # Mod+Alt+G in config.kdl; see the comment there for why this cannot be
+    # automatic.
+    "niri/gather-windows.sh" = {
+      text = ''
+        #!/bin/sh
+        set -eu
+
+        ws=$(niri msg --json workspaces)
+        here=$(printf '%s' "$ws" | jq -r '.[] | select(.is_focused) | .output')
+
+        # Every monitor always keeps one empty workspace at the bottom, so the
+        # highest index is that one. Gathering there lands everything on a
+        # fresh desktop instead of on top of what is already on screen.
+        target=$(printf '%s' "$ws" | jq -r --arg o "$here" '[.[] | select(.output == $o) | .idx] | max')
+        elsewhere=$(printf '%s' "$ws" | jq -c --arg o "$here" '[.[] | select(.output != $o) | .id]')
+
+        # By id, so the focus never moves, and one window at a time: niri only
+        # offers move-column-to-workspace for the focused column.
+        niri msg --json windows \
+          | jq -r --argjson ids "$elsewhere" '.[] | select(.workspace_id as $w | $ids | index($w)) | .id' \
+          | while read -r id; do
+              niri msg action move-window-to-workspace --window-id "$id" --focus false "$target" >/dev/null
+            done
+      '';
+      executable = true;
+    };
+
     "niri/config.kdl".text = ''
       // vim: ft=kdl
 
@@ -338,16 +366,35 @@ in
           Mod+Shift+J { move-window-down; }
           Mod+Shift+K { move-window-up; }
 
-          // ── Workspaces 1–4 ───────────────────────────
+          // ── Workspaces (2 per monitor) ───────────────
+          // Indices are per output, so 1 and 2 are the same two desktops on
+          // whichever monitor holds the focus. There is no 3 or 4: niri's
+          // workspaces are dynamic, and a third only exists once something
+          // has been pushed past the second.
           Mod+1 { focus-workspace 1; }
           Mod+2 { focus-workspace 2; }
-          Mod+3 { focus-workspace 3; }
-          Mod+4 { focus-workspace 4; }
 
           Mod+Shift+1 { move-window-to-workspace 1; }
           Mod+Shift+2 { move-window-to-workspace 2; }
-          Mod+Shift+3 { move-window-to-workspace 3; }
-          Mod+Shift+4 { move-window-to-workspace 4; }
+
+          // ── Monitors ─────────────────────────────────
+          // A second, coarser axis: niri keeps a separate workspace list per
+          // output, so J/K run out of desktops at the end of a monitor, and
+          // Alt is what steps between the monitors themselves.
+          Mod+Alt+H { focus-monitor-left; }
+          Mod+Alt+L { focus-monitor-right; }
+
+          // Sending a thing across, rather than looking across: the column
+          // travels, matching Mod+Shift+H/L above, with Ctrl added to make
+          // room for the monitor directions on the same two keys.
+          Mod+Ctrl+Alt+H { move-column-to-monitor-left; }
+          Mod+Ctrl+Alt+L { move-column-to-monitor-right; }
+
+          // Nothing can watch for the TV dropping into standby: it holds the
+          // HDMI link up, so the kernel and niri both still call the output
+          // connected and its windows stay where they are. Gathering them
+          // back onto the focused monitor is a keypress for that reason.
+          Mod+Alt+G { spawn "${config.xdg.configHome}/niri/gather-windows.sh"; }
 
           // ── Layout ───────────────────────────────────
           Mod+F    { fullscreen-window; }
@@ -413,14 +460,6 @@ in
           match app-id="^org.gnome.Nautilus$"
           open-maximized true
       }
-
-      // ── Named workspaces ─────────────────────────────
-      // Workspaces open on the currently focused output, so which monitor
-      // they land on follows the focus rather than this file. Monitor layout
-      // is kanshi's job — see ./kanshi.nix.
-      workspace "1"
-      workspace "2"
-      workspace "3"
     '';
   };
 }

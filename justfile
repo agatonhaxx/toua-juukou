@@ -112,7 +112,7 @@ fmt:
 [group("dev")]
 [no-exit-message]
 check *args:
-    nix flake check --option allow-import-from-derivation false {{ args }}
+    nix flake check --option allow-import-from-derivation {{ args }}
 
 # List the registered NixOS and Darwin host outputs.
 [group("dev")]

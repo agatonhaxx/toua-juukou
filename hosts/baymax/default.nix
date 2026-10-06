@@ -1,7 +1,16 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 let
   groups = import ../../modules/groups.nix;
   inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
+
+  # Windows for the wheel filter below, measured from evtest captures of this
+  # mouse: chatter lands within a few ms of the tick it belongs to, while a
+  # genuine change of direction never came closer than 120ms. 50 splits the
+  # two with room to spare. The fastest repeat of the *same* direction was 2ms
+  # (one detent reported twice) against 18ms for the next real notch, so 8
+  # separates those.
+  reverseWindow = 50;
+  repeatWindow = 8;
 in
 {
   imports = [
@@ -58,6 +67,34 @@ in
       users.eek.homeModule = ../../user/eek;
     }
   ];
+
+  # This host's wheel reports one detent more than once — a worn encoder, not a
+  # driver problem. `mouse-wheel-debounce` (pkgs/) drops those reports by their
+  # kernel timestamps, and interception-tools is what puts it *below* libinput,
+  # so the events it discards are events no compositor ever sees: `intercept`
+  # grabs the device, the filter rewrites the stream, and `uinput` replays it as
+  # a virtual device in its place.
+  #
+  # It stays in this file because it is one failing wheel, not a fleet policy,
+  # and because a grabbed device is one nothing else can read. The udevmon job
+  # is scoped to that wheel by name, and to the relative-event codes only a
+  # wheel reports, so nothing else is ever grabbed — the mouse also presents
+  # two keyboard interfaces under the same name.
+  services.interception-tools = {
+    enable = true;
+
+    # Contributes the filter to udevmon's PATH, which is where the job finds it
+    # by name.
+    plugins = [ pkgs.mouse-wheel-debounce ];
+
+    udevmonConfig = ''
+      - JOB: "intercept -g $DEVNODE | mouse-wheel-debounce --reverse-window ${toString reverseWindow} --repeat-window ${toString repeatWindow} | uinput -d $DEVNODE"
+        DEVICE:
+          NAME: "Mionix Co. Naos 3200 Mouse"
+          EVENTS:
+            EV_REL: [REL_WHEEL, REL_WHEEL_HI_RES]
+    '';
+  };
 
   services.openssh = {
     enable = true;

@@ -118,6 +118,12 @@ Intel and ARM Linux/macOS. `toua.programs.flow.enable` installs it for the user;
 profiles select it through the media group. Linux uses the upstream Debian
 package with Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
 
+`pkgs.mouse-wheel-debounce` drops mouse wheel encoder chatter. It is not a
+program but a filter on one device: baymax runs it between that wheel and
+libinput through interception-tools, so the events it discards are events no
+compositor sees. It is wired up in `hosts/baymax/default.nix` rather than in a
+module, because it answers one failing wheel and not a fleet-wide policy.
+
 ## Adding or changing a service
 
 1. Add one service definition under `modules/services/` (loaded on every class)

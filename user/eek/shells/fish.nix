@@ -9,18 +9,13 @@
     programs.fish = {
       shellAbbrs = {
         "cx" = "chmod +x";
-
-        "gp" = "git push";
-        "gl" = "git pull";
         "gc" = "git commit -m";
-        "gn" = "git switch -c";
-        "gs" = "git switch";
-        "ga" = "git add";
+        "gs" = "git status";
       };
 
       shellAliases = {
-        "ls" = "eza";
-        "ll" = "ls -la";
+        "l" = "eza";
+        "ll" = "l -la";
 
         "nixpkgs-using" = "with_gh_token nixpkgs-using";
       };
