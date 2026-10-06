@@ -1,9 +1,51 @@
 {
   lib,
-  self,
+  # Only `mkSecret` needs the flake, so a module directory that wants nothing
+  # but `importDir` can call this file with `lib` alone.
+  self ? null,
 }:
 let
-  inherit (lib) mkEnableOption mkOption types;
+  inherit (lib) hasSuffix mkEnableOption mkOption types;
+
+  /**
+    Import every `.nix` file in `dir` as a module.
+
+    `default.nix` is always skipped, since the file that does the importing is
+    usually the one sitting beside the others. `exclude` names any further file
+    to skip, such as the `lib.nix` next to this one.
+
+    Directory order is `builtins.readDir` order, so the modules do not need to
+    be listed — and adding a file to the directory is enough to load it.
+
+    # Type
+
+    ```
+    importDir :: { dir :: Path, exclude ? [ String ] } -> [ Path ]
+    ```
+
+    # Example
+
+    ```nix
+    { lib, ... }:
+    let
+      inherit (import ../shared/lib.nix { inherit lib; }) importDir;
+    in
+    {
+      imports = importDir { dir = ./.; };
+    }
+    ```
+  */
+  importDir =
+    { dir, exclude ? [ ] }:
+    let
+      files = builtins.readDir dir;
+      skip = [ "default.nix" ] ++ exclude;
+    in
+    map (name: dir + "/${name}") (
+      builtins.filter (
+        name: files.${name} == "regular" && hasSuffix ".nix" name && !builtins.elem name skip
+      ) (builtins.attrNames files)
+    );
 
   /**
     A quick way to create the standard service options under
@@ -12,7 +54,7 @@ let
     # Type
 
     ```
-    mkServiceOption :: String -> (Int -> String -> String -> AttrSet) -> AttrSet
+    mkServiceOption :: String -> AttrSet -> AttrSet
     ```
   */
   mkServiceOption =
@@ -40,7 +82,6 @@ let
       domain = mkOption {
         type = types.str;
         default = domain;
-        defaultText = "networking.domain";
         description = "Domain name for the ${name} service";
       };
     };
@@ -58,7 +99,7 @@ let
     # Type
 
     ```
-    mkSecret :: (String -> String -> AttrSet) -> AttrSet
+    mkSecret :: AttrSet -> AttrSet
     ```
 
     # Example
@@ -88,5 +129,5 @@ let
     // args';
 in
 {
-  inherit mkSecret mkServiceOption;
+  inherit importDir mkSecret mkServiceOption;
 }

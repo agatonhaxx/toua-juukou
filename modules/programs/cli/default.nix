@@ -1,10 +1,7 @@
 { lib, ... }:
 let
-  files = builtins.readDir ./.;
-  moduleFiles = builtins.filter (
-    name: name != "default.nix" && files.${name} == "regular" && lib.hasSuffix ".nix" name
-  ) (builtins.attrNames files);
+  inherit (import ../../shared/lib.nix { inherit lib; }) importDir;
 in
 {
-  imports = map (name: ./. + "/${name}") moduleFiles;
+  imports = importDir { dir = ./.; };
 }

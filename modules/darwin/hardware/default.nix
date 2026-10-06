@@ -1,8 +1,7 @@
+{ lib, ... }:
+let
+  inherit (import ../../shared/lib.nix { inherit lib; }) importDir;
+in
 {
-  imports = [
-    # keep-sorted start
-    ./keyboard.nix
-    ./trackpad.nix
-    # keep-sorted end
-  ];
+  imports = importDir { dir = ./.; };
 }

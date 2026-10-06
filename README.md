@@ -47,6 +47,9 @@ profiles leave those off and hosts enable the ones they need individually.
 | `ponkotsu` | `wsl` | WSL development machine |
 | `wall-e` | `headless` | Public services and client backup destination |
 
+Baymax is installed locally from a NixOS USB installer rather than by
+`nixos-anywhere`; see `hosts/baymax/INSTALL.md`.
+
 ## Commands
 
 ```sh
@@ -66,11 +69,13 @@ target disk. Do not run it for an ordinary update.
 ## Adding or changing a program
 
 1. Add the application module under `modules/programs/cli/` or
-   `modules/programs/gui/`.
+   `modules/programs/gui/`. Both directories are imported wholesale, so the
+   file is picked up without a list to edit.
 2. Declare its `toua.programs.<name>.enable` option in the owning module.
 3. Gate its configuration on the corresponding enable option.
-4. Add it to `programs.defaults` or another suitable group if it belongs in a
-   reusable baseline.
+4. Add its name to a group list in `modules/shared/options.nix`, such as
+   `cliProgramNames` or `mediaProgramNames`, if it belongs in a reusable
+   baseline that a profile can turn on.
 5. Add or override it in a machine profile, then override it for a host when
    platform or machine constraints require it.
 
@@ -175,6 +180,9 @@ Set `openRegistration` back to `false` and deploy Wall-E again immediately.
 
 ## Backups
 
+Borg jobs are not wired up yet — see [Known gaps](#known-gaps). This is the
+intended layout:
+
 ```text
 bender/mac/ponkotsu -> Wall-E -> locked repository mirrors on Baymax
 Wall-E services ----------------> separate repository on Baymax
@@ -186,8 +194,7 @@ Keep these offline:
 - every Borg repository passphrase;
 - `borg key export` from every initialized repository.
 
-The public keys in `keys/borg/` only authorize SSH. They cannot decrypt a
-backup.
+The Borg SSH public keys authorize SSH only; they cannot decrypt a backup.
 
 Useful checks on a host:
 
@@ -212,21 +219,17 @@ Service URLs:
 - Vaultwarden: `https://vault.huxe.eu`
 - Atuin: `https://atuin.huxe.eu`
 
+## Known gaps
 
-# TODO
-- wire up Borg backups: `modules/services/borgbackup.nix` is complete (jobs,
-  mirrors, receiver repositories) but no host defines any, so the module is
-  inert, and the `secrets/services/borg/<host>/…` files it references do not
-  exist.
-- implement Bitwarden SSH-agent handling: `user/eek/system/env.nix` still has a
-  `REPLACE-ME` socket placeholder.
-- separate programs into groups in shared options
-- separate services into groups in shared options
-Shared modules contain installation logic, platform support and overridable enablement defaults. Your Linux `eek` accounts and macOS `Glenn.Dahl` account use the new entry point.
+- **Borg backups are not wired up.** `modules/services/borgbackup.nix` implements
+  jobs, mirrors and receiver repositories, but no host defines any, so the module
+  is inert. Wiring it up also needs `keys/borg/<name>.pub` to exist and the
+  `secrets/services/` rule in `.sops.yaml` to match the nested
+  `secrets/services/borg/<host>/…` paths the module expects.
+- **Bitwarden SSH agent.** `user/eek/system/env.nix` still carries a `REPLACE-ME`
+  socket path for the Bitwarden desktop agent on macOS.
+- **Services are not grouped like programs.** Only `services.defaults` exists,
+  and it currently drives just the Tailscale default; the infrastructure services
+  are enabled per profile or host instead.
 
-The host changes follow this pattern:
-
-```
-+ users.eek.homeModule = ../../user/eek;
-+ users."Glenn.Dahl".homeModule = ../../user/eek
-```
+See [TODO.md](TODO.md) for the scheduled work.

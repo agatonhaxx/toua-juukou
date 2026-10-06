@@ -9,17 +9,6 @@
       "amdgpu"
     ];
 
-    loader = {
-      systemd-boot = {
-        enable = true;
-        configurationLimit = 10;
-      };
-
-      # Spelled out because the default has moved between nixpkgs releases and this
-      # one has to agree with the mountpoint in ./disko.nix.
-      efi.efiSysMountPoint = "/boot";
-    };
-
     initrd.availableKernelModules = [
       "nvme"
       "xhci_pci"

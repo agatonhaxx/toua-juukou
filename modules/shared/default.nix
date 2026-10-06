@@ -1,16 +1,18 @@
 {
   config,
+  lib,
   ...
 }:
+let
+  inherit (import ./lib.nix { inherit lib; }) importDir;
+in
 {
-  imports = [
-    # keep-sorted start
-    ./nix.nix
-    ./options.nix
-    ./secrets.nix
-    ./users.nix
-    # keep-sorted end
-  ];
+  # `lib.nix` holds helpers rather than a module, so it is skipped.
+  imports = importDir {
+    dir = ./.;
+    exclude = [ "lib.nix" ];
+  };
+
   programs.fish.enable = true;
   programs.fish.useBabelfish = true;
 

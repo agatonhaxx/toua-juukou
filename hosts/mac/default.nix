@@ -23,15 +23,14 @@ in
     # manageUser = false;
     mac.homebrew.enable = true;
 
-    # The only member of this group is qbittorrent, which is not wanted here.
-    # The profile turns it on by default, because it follows `programs.gui.enable`.
+    # qbittorrent follows `programs.gui.enable` and is not wanted here.
     programs = {
       # keep-sorted start
       dev.enable = true;
-      download.enable = false;
       gui.enable = true;
       k8s.enable = true;
       kiwidesk.enable = true;
+      qbittorrent.enable = false;
       # keep-sorted end
     };
   };

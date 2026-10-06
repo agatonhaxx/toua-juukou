@@ -4,6 +4,7 @@ keys:
   - &ponkotsu age17h72ekfzrn6sd9ywpnt87du32tnrxy9r49yfydje554f4pvcs5us6azkcp
   - &mac age12dpnp82z5wckv2x4hg6q7m98jrnu6d056vlhep2px3vf5u3eeceq6a7mc0
   - &wall-e age1muxs363pzdyagcgdq5wqumv773rlffedg0wxw6nl4u59xuht8uzsjt25sm
+  - &baymax age10tspkmr6fkjqegtuefp26qlxc74365cgqwfer6ac3szeemk6mpyqcl73lq
 
 creation_rules:
   - path_regex: secrets/eek\.yaml
@@ -14,6 +15,7 @@ creation_rules:
           - *ponkotsu
           - *mac
           - *wall-e
+          - *baymax
 
   - path_regex: secrets/services/[^/]+\.(yaml|json|env|ini)$
     key_groups:

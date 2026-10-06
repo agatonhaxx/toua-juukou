@@ -6,7 +6,7 @@
 }:
 {
   home.packages =
-    lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.toua.programs.download.enable)
+    lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig.toua.programs.qbittorrent.enable)
       [
         pkgs.qbittorrent
       ];

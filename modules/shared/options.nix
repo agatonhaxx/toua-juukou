@@ -13,10 +13,10 @@ let
 
   mediaProgramNames = [
     # keep-sorted start
-    "download"
     "ffmpeg"
     "flow"
     "mpv"
+    "qbittorrent"
     # keep-sorted end
   ];
 

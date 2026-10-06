@@ -2,9 +2,9 @@
   imports = [
     # keep-sorted start
     ../profiles/mac.nix
-    ../programs/gui/flow.nix
     ../services
     ./brew
+    ./flow.nix
     ./hardware
     ./options.nix
     ./preferences

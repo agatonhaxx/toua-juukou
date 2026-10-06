@@ -7,7 +7,6 @@
 let
   additionalClasses = {
     wsl = "nixos";
-    raspberry-pi = "nixos";
   };
 
   normaliseClass = class: additionalClasses.${class} or class;
@@ -37,7 +36,7 @@ in
             inputs.home-manager.nixosModules.home-manager
             inputs.sops-nix.nixosModules.sops
             # Imported for every NixOS host, but inert unless a host declares
-            # `disko.devices` — only wall-e does.
+            # `disko.devices` — wall-e and baymax do.
             inputs.disko.nixosModules.disko
           ])
 
@@ -83,12 +82,6 @@ in
         arch = "x86_64";
         class = "nixos";
       };
-
-      # TODO add rpi
-      # zuko = {
-      #   arch = "aarch64";
-      #   class = "raspberry-pi";
-      # };
       # keep-sorted end
     };
   };

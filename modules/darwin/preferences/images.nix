@@ -1,3 +1,4 @@
+# Screensaver, screenshots etc.
 {
   system.defaults.CustomUserPreferences = {
     "com.apple.screensaver" = {

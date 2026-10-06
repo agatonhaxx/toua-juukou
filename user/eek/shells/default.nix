@@ -1,11 +1,9 @@
+{ lib, ... }:
+let
+  inherit (import ../../../modules/shared/lib.nix { inherit lib; }) importDir;
+in
 {
-  imports = [
-    # keep-sorted start
-    ./bash.nix
-    ./fish.nix
-    ./zsh.nix
-    # keep-sorted end
-  ];
+  imports = importDir { dir = ./.; };
 
   home.shellAliases = {
     "cat" = "bat";

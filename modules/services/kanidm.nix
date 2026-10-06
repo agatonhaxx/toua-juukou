@@ -12,6 +12,11 @@ let
   toua = config.toua;
   vaultwarden = config.toua.services.vaultwarden;
 
+  # Every provisioned person joins the Vaultwarden SSO group, but that group is
+  # only created when vaultwarden is enabled, so membership is gated with it
+  # rather than referencing a group that does not exist.
+  vaultwardenGroups = lib.optional vaultwarden.enable "vaultwarden.access";
+
   # `cfg.domain` is set by the option below, which is what this certificate is
   # issued for.
   cert = config.security.acme.certs.${cfg.domain};
@@ -128,18 +133,13 @@ in
             displayName = "glenn";
             legalName = "glenn";
             mailAddresses = [ "glenn@huxe.eu" ];
-            groups = [
-              "vaultwarden.access"
-            ];
-
+            groups = vaultwardenGroups;
           };
           eek = {
             displayName = "eek";
             legalName = "eek";
             mailAddresses = [ "eek@huxe.eu" ];
-            groups = [
-              "vaultwarden.access"
-            ];
+            groups = vaultwardenGroups;
           };
         };
 

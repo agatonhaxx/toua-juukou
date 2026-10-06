@@ -1,11 +1,7 @@
+{ lib, ... }:
+let
+  inherit (import ../../../../modules/shared/lib.nix { inherit lib; }) importDir;
+in
 {
-  imports = [
-    # keep-sorted start
-    ./chromium.nix
-    ./firefox.nix
-    ./kiwidesk.nix
-    ./niri.nix
-    ./wezterm.nix
-    # keep-sorted end
-  ];
+  imports = importDir { dir = ./.; };
 }

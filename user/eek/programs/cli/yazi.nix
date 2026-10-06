@@ -82,7 +82,7 @@
             "g"
             "d"
           ];
-          run = "cd ~/Dev";
+          run = "cd ~/dev";
           desc = "[ G ]o to the [ d ]evelopment directory";
         }
         {
@@ -90,7 +90,7 @@
             "g"
             "D"
           ];
-          run = "cd ~/Downloads";
+          run = "cd ~/downloads";
           desc = "[ G ]o to the [ d ]ownloads directory";
         }
 
