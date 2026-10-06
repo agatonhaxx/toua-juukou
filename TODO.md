@@ -2,7 +2,6 @@
 
 ## Personal
 
-- add deepseek env
 - remove caps entirely from esc
 - fix wallpaper repo as input
 - fix monitor settings niri

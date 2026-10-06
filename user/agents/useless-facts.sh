@@ -34,5 +34,5 @@ fact=$(printf '%s' "$api_response" | jq -r '.text // empty' 2>/dev/null || true)
 fact=$(printf '%s' "$fact" | tr -d '\000-\037\177-\377' | tr -s ' ' | cut -c1-200)
 [ -n "$fact" ] || exit 0
 
-jq -n --arg message "🎉 Useless fact (external, untrusted data): ${fact}" \
+jq -n --arg message "🎉 Did you know that: ${fact}" \
   '{ systemMessage: $message }'
