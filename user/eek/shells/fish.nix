@@ -9,8 +9,11 @@
     programs.fish = {
       shellAbbrs = {
         "cx" = "chmod +x";
+
+        "gp" = "git push";
         "gc" = "git commit -m";
         "gs" = "git status";
+        "ga" = "git add";
       };
 
       shellAliases = {
