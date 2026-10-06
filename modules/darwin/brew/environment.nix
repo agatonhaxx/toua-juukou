@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  cfg = config.toua.mac.homebrew;
+  cfg = config.toua.homebrew;
 in
 {
   environment = lib.mkIf cfg.enable {

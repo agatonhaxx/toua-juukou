@@ -28,7 +28,6 @@ in
       swayidle # idle management (dim + lock)
       wayshot # screenshot tool
       wlogout # styled logout menu
-      wlr-randr # display output management (HDMI, etc.)
       xwayland-run
       # keep-sorted end
     ]
@@ -279,16 +278,9 @@ in
           }
       }
 
-      // Output configuration: laptop (1440p) + TV (1080p)
-      output "HDMI-A-2" {
-          scale 1.0
-          position x=2560 y=0
-      }
-
-      output "eDP-1" {
-          scale 1.0
-          position x=0 y=0
-      }
+      // Monitors are kanshi's job, not this file's — see services.kanshi in
+      // ./kanshi.nix. The `output` blocks that used to be here named bender's
+      // connectors on every host, so baymax was left unconfigured.
 
       gestures {
         hot-corners {
@@ -322,16 +314,23 @@ in
 
       binds {
           // ── Launcher ──────────────────────────────────
-          Mod+Return  { spawn "fuzzel"; }
-          Mod+Space  { spawn "wezterm"; }
+          Mod+Return  { spawn "wezterm"; }
+          Mod+Space  { spawn "fuzzel"; }
           Mod+Q       { close-window; }
           Mod+Slash   { show-hotkey-overlay; }
 
           // ── Focus (vim-style hjkl) ───────────────────
+          // H/L cross columns, which run horizontally. J/K cross workspaces,
+          // which niri stacks vertically within each monitor, so the two axes
+          // of the cluster match the two axes on screen.
           Mod+H { focus-column-left; }
           Mod+L { focus-column-right; }
-          Mod+J { focus-window-down; }
-          Mod+K { focus-window-up; }
+          Mod+J { focus-workspace-down; }
+          Mod+K { focus-workspace-up; }
+
+          // ── Focus window within a column ─────────────
+          Mod+Ctrl+J { focus-window-down; }
+          Mod+Ctrl+K { focus-window-up; }
 
           // ── Move windows ─────────────────────────────
           Mod+Shift+H { move-column-left; }
@@ -416,8 +415,9 @@ in
       }
 
       // ── Named workspaces ─────────────────────────────
-      // Workspaces open on the currently focused output. Display layout is
-      // managed by the output blocks above (eDP-1 at 1.0x, HDMI-A-2 at 1.5x).
+      // Workspaces open on the currently focused output, so which monitor
+      // they land on follows the focus rather than this file. Monitor layout
+      // is kanshi's job — see ./kanshi.nix.
       workspace "1"
       workspace "2"
       workspace "3"

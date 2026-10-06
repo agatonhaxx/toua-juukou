@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.toua.mac.homebrew;
+  cfg = config.toua.homebrew;
 in
 {
   imports = [

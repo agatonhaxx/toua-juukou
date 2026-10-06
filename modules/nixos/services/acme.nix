@@ -8,7 +8,7 @@ let
   cfg = config.toua.services.acme;
   toua = config.toua;
 
-  inherit (import ../shared/lib.nix { inherit lib self; }) mkSecret;
+  inherit (import ../../shared/lib.nix { inherit lib self; }) mkSecret;
 in
 {
   options.toua.services.acme.enable = lib.mkEnableOption "the ACME service";

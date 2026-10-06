@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (import ../shared/lib.nix { inherit lib self; }) mkServiceOption mkWebService;
+  inherit (import ../../shared/lib.nix { inherit lib self; }) mkServiceOption mkWebService;
 
   cfg = config.toua.services.atuin;
   toua = config.toua;

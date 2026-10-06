@@ -78,6 +78,25 @@ let
       builtins.attrNames packages
     );
 
+  # Users the host manages, keyed by username. The primary user is always
+  # managed — it is the account the host's integrations assume — so it is
+  # re-added after filtering and forced enabled. `homeModule` falls back to the
+  # repo-wide default for a host that names a primary user without listing it in
+  # `toua.users`; it matches the option default in modules/shared/options.nix.
+  mkManagedUsers =
+    toua:
+    let
+      enabled = lib.filterAttrs (_: user: user.enable or false) toua.users;
+      primary = toua.users.${toua.primaryUser} or { };
+    in
+    enabled
+    // {
+      ${toua.primaryUser} = primary // {
+        enable = true;
+        homeModule = primary.homeModule or ../../user/home.nix;
+      };
+    };
+
   /**
     A quick way to create the standard service options under
     `toua.services.<name>`. Ported from the dotfiles repo.
@@ -203,6 +222,7 @@ in
     mkDefaults
     mkEnableOptions
     mkEnabledPackages
+    mkManagedUsers
     mkProgramToggles
     mkSecret
     mkServiceOption

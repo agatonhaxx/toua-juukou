@@ -13,7 +13,7 @@ in
       (mkDefaults groups.media)
       (mkDefaults groups.mac)
       (mkDefaults groups.network)
-      (mkDefaults { mac.homebrew.enable = true; })
+      (mkDefaults { homebrew.enable = true; })
     ]
   );
 }

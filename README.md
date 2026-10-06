@@ -120,12 +120,14 @@ package with Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
 
 ## Adding or changing a service
 
-1. Add one service definition under `modules/services/`.
+1. Add one service definition under `modules/services/` (loaded on every class)
+   or `modules/nixos/services/` (NixOS only).
 2. Declare its `toua.services.<name>` options in that file.
 3. Gate its implementation on `toua.services.<name>.enable`.
-4. On NixOS nothing else is needed: `modules/services/nixos.nix` imports every
-   sibling file. Darwin services are listed by hand in
-   `modules/services/default.nix`.
+4. Nothing else is needed: each directory's `default.nix` imports every sibling
+   through `importDir`. NixOS imports both directories; Darwin imports only
+   `modules/services/`, which is why a service touching `security.acme`,
+   `services.nginx` or `toua.domain` belongs in `modules/nixos/services/`.
 5. Add suitable services to a group in `modules/groups.nix` and select it in a
    profile or host. The `network` group selects Tailscale; `server` selects the
    infrastructure stack. Service enable options always default to false.
@@ -183,8 +185,8 @@ matching the `eek` recipient in `.sops.yaml`.
 ## Add a Kanidm/SSO user
 
 1. Add the person under `services.kanidm.provision.persons` in
-   `modules/services/kanidm.nix`. Include `vaultwarden.access` in `groups` if
-they should use Vaultwarden.
+   `modules/nixos/services/kanidm.nix`. Include `vaultwarden.access` in `groups`
+   if they should use Vaultwarden.
 2. Deploy Wall-E:
 
    ```sh
@@ -216,7 +218,7 @@ admin password, not the stored `$argon2...` hash.
 
 Atuin has no administrator command for creating one user while registration is
 closed. Temporarily change `openRegistration` to `true` in
-`modules/services/atuin.nix`, deploy Wall-E, and let the user run:
+`modules/nixos/services/atuin.nix`, deploy Wall-E, and let the user run:
 
 ```sh
 atuin register -u USERNAME -e EMAIL
@@ -268,10 +270,10 @@ Service URLs:
 
 ## Known gaps
 
-- **Borg backups are not wired up.** `modules/services/borgbackup.nix` implements
-  jobs, mirrors and receiver repositories, but no host defines any, so the module
-  is inert. Wiring it up also needs `keys/borg/<name>.pub` to exist and the
-  `secrets/services/` rule in `.sops.yaml` to match the nested
+- **Borg backups are not wired up.** `modules/nixos/services/borgbackup.nix`
+  implements jobs, mirrors and receiver repositories, but no host defines any,
+  so the module is inert. Wiring it up also needs `keys/borg/<name>.pub` to
+  exist and the `secrets/services/` rule in `.sops.yaml` to match the nested
   `secrets/services/borg/<host>/…` paths the module expects.
 - **Bitwarden SSH agent.** `user/eek/system/env.nix` still carries a `REPLACE-ME`
   socket path for the Bitwarden desktop agent on macOS.

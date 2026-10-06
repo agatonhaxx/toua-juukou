@@ -20,9 +20,6 @@
   };
 
   boot = {
-    # Use latest kernel.
-    # TODO change for latest if wanted
-    # kernelPackages = pkgs.linuxPackages_latest;
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
@@ -64,11 +61,6 @@
       enable = true;
       powerOnBoot = true;
     };
-    # TODO needed?
-    # graphics = {
-    #   enable = true;
-    #   enable32Bit = true; # Crucial for running 32-bit games (like Wine/Proton)
-    # };
   };
   powerManagement.cpuFreqGovernor = "ondemand";
 

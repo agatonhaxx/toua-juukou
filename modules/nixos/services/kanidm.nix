@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (import ../shared/lib.nix { inherit lib self; }) mkSecret mkServiceOption mkWebService;
+  inherit (import ../../shared/lib.nix { inherit lib self; }) mkSecret mkServiceOption mkWebService;
 
   cfg = config.toua.services.kanidm;
   toua = config.toua;

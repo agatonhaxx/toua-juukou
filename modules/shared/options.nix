@@ -35,10 +35,6 @@ in
       description = "Users managed by this host, keyed by username.";
     };
 
-    manageUser = mkEnableOption "Declare the user account in the system config" // {
-      default = true;
-    };
-
     timeZone = mkOption {
       type = types.str;
       default = "Europe/Stockholm";

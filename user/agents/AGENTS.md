@@ -7,6 +7,7 @@
 - **Ask first**: Always ask before running destructive commands, deleting files,
   checking external sources or force-pushing and so on.
 - **No fluff**: Be concise. Skip conversational filler and apologies. Just show the code/answer.
+- **Agents**: Do not use agents, I prefer a slow and methodical pace and knowing what you are up to.
 - **Do it right**: Prefer a slow, correct solution over quick, broken guesses.
 - **Standards**: Always adhere to established community standards. A standard overrules the user
   and in such cases the user should be informed before proceeding.
@@ -38,12 +39,12 @@ These tools are okay to use locally:
 
 Externally:
 
-- curl for gathering information and testing API's a
+- curl for gathering information and testing APIs
 - networking tools like ping, dig and standard tools for troubleshooting.
 
 ## External sources
 
 I will fill this with the globally accepted external sources.
 
-- CVS systems that match the work done. Like GitHub, Gitlab, Codeberg and Gorgejo are probably OK
+- VCS systems that match the work done. Like GitHub, Gitlab, Codeberg and Forgejo are probably OK
   but prompt user to add repo URLs to the project accept list.

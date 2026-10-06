@@ -29,6 +29,9 @@ in
   networking = {
     hostName = "baymax";
     networkmanager.enable = true;
+
+    # Flow syncs between machines over this port.
+    firewall.allowedTCPPorts = [ 43251 ];
   };
 
   systemd.services.NetworkManager-wait-online.enable = false;
@@ -45,6 +48,11 @@ in
     (mkDefaults groups.agents)
     {
       profiles.desktop.enable = true;
+
+      programs = {
+        blueman.enable = true;
+        bluetooth.enable = true;
+      };
 
       primaryUser = "eek";
       users.eek.homeModule = ../../user/eek;

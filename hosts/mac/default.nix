@@ -26,7 +26,6 @@ in
       primaryUser = "Glenn.Dahl";
       users."Glenn.Dahl".homeModule = ../../user/eek;
       profiles.mac.enable = true;
-      # manageUser = false;
 
       programs = {
         # keep-sorted start
@@ -41,7 +40,6 @@ in
     users."Glenn.Dahl".uid = 502;
     knownUsers = [ "Glenn.Dahl" ];
   };
-  # environment.systemPackages = with pkgs; [ bitwarden-cli ];
 
   # nix-darwin writes the hostname itself whenever these are set, and easy-hosts
   # would otherwise default `hostName` to the flake host name `mac`. Both are

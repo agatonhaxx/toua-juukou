@@ -9,15 +9,9 @@
   ...
 }:
 let
+  inherit (import ../modules/shared/lib.nix { inherit lib; }) mkManagedUsers;
   cfg = config.toua;
-  primaryUser = cfg.users.${cfg.primaryUser} or { };
-  users = cfg.users // {
-    ${cfg.primaryUser} = primaryUser // {
-      enable = true;
-      homeModule = primaryUser.homeModule or ./home.nix;
-    };
-  };
-  enabledUsers = lib.filterAttrs (_: user: user.enable or false) users;
+  users = mkManagedUsers cfg;
 in
 {
   config = {
@@ -38,17 +32,15 @@ in
         { home.stateVersion = "26.05"; }
       ];
 
-      users = lib.mapAttrs (_: user: user.homeModule) enabledUsers;
+      users = lib.mapAttrs (_: user: user.homeModule) users;
     };
 
-    users.users = lib.mkIf cfg.manageUser (
-      lib.mapAttrs' (
-        user: _:
-        lib.nameValuePair user {
-          home = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/${user}" else "/home/${user}";
-          shell = pkgs.fish;
-        }
-      ) enabledUsers
-    );
+    users.users = lib.mapAttrs' (
+      user: _:
+      lib.nameValuePair user {
+        home = if pkgs.stdenv.hostPlatform.isDarwin then "/Users/${user}" else "/home/${user}";
+        shell = pkgs.fish;
+      }
+    ) users;
   };
 }

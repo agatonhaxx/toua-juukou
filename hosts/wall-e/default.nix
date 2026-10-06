@@ -196,8 +196,8 @@
   services.qemuGuest.enable = true;
 
   # No shared module enables sshd; on a VPS it is the only way in. The host key
-  # has to exist before sops can derive this host's age recipient, and
-  # `../../.sops.yaml` does not list wall-e yet.
+  # has to exist before sops can derive this host's age recipient, which is why
+  # `../../.sops.yaml` lists wall-e.
   services.openssh = {
     enable = true;
     generateHostKeys = true;

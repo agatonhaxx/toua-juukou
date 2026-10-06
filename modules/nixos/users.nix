@@ -5,11 +5,8 @@
   ...
 }:
 let
-  inherit (import ../shared/lib.nix { inherit lib self; }) mkSecret;
-  managedUsers = lib.filterAttrs (_: user: user.enable or false) config.toua.users;
-  users = managedUsers // {
-    ${config.toua.primaryUser} = managedUsers.${config.toua.primaryUser} or { };
-  };
+  inherit (import ../shared/lib.nix { inherit lib self; }) mkManagedUsers mkSecret;
+  users = mkManagedUsers config.toua;
 in
 {
   # `neededForUsers` decrypts before accounts are created, so these secrets stay
