@@ -61,6 +61,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Packages MediaManager from upstream's `uv.lock` and carries the only
+    # service module for it. Upstream ships a Docker image instead, so this is
+    # the Nix-native way to run it; see modules/nixos/services/mediamanager.nix.
+    mediamanager-nix = {
+      url = "github:strangeglyph/mediamanager-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nvim-eek.url = "github:agatonhaxx/nvim-eek";
     nvim-eek.inputs.nixpkgs.follows = "nixpkgs";
 

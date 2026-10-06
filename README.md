@@ -273,6 +273,9 @@ Service URLs:
 - Kanidm: `https://sso.huxe.eu`
 - Vaultwarden: `https://vault.huxe.eu`
 - Atuin: `https://atuin.huxe.eu`
+- MediaManager: `http://127.0.0.1:8000` on Baymax, which is not proxied; reach it
+  over the LAN or an SSH tunnel. Its `toua.services.mediamanager` secret needs
+  `just secret secrets/services/mediamanager.yaml` to exist before it is enabled.
 
 ## Known gaps
 

@@ -71,5 +71,21 @@
     options = [ "noatime" ];
   };
 
+  # Nested inside the xfs volume above, so it must not mount until that one
+  # has: systemd otherwise mounts the two in parallel and the xfs can land on
+  # top of the nvme, hiding it. `depends` is what becomes the mount unit's
+  # `x-systemd.requires-mounts-for`.
+  #
+  # `subvol=qt` is what the partition was mounted with before this entry was
+  # lost: the btrfs root is not the data, so without it the mount succeeds and
+  # shows a single empty directory named `qt` in place of the contents.
+  # `compress=zstd` was on it too.
+  fileSystems."/data/baymax/qt" = {
+    device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_500GB_S466NX0K927369W-part1";
+    fsType = "btrfs";
+    options = [ "compress=zstd" "noatime" "subvol=qt" ];
+    depends = [ "/data/baymax" ];
+  };
+
   swapDevices = [ { device = "/var/swapfile"; } ];
 }

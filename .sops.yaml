@@ -17,6 +17,15 @@ creation_rules:
           - *wall-e
           - *baymax
 
+  # MediaManager runs on baymax alone, so its secret is kept off the other
+  # hosts. This rule precedes the `services/` rule below because sops takes the
+  # first match, and the generic rule does not list baymax.
+  - path_regex: secrets/services/mediamanager\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *eek
+          - *baymax
+
   - path_regex: secrets/services/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:

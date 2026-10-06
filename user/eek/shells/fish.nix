@@ -12,7 +12,7 @@
 
         "gp" = "git push";
         "gc" = "git commit -m";
-        "gs" = "git status";
+        "gs" = "git switch";
         "ga" = "git add";
       };
 

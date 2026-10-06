@@ -381,14 +381,14 @@ in
           // A second, coarser axis: niri keeps a separate workspace list per
           // output, so J/K run out of desktops at the end of a monitor, and
           // Alt is what steps between the monitors themselves.
-          Mod+Alt+H { focus-monitor-left; }
-          Mod+Alt+L { focus-monitor-right; }
+          Mod+Alt+H { focus-monitor-right; }
+          Mod+Alt+L { focus-monitor-left; }
 
           // Sending a thing across, rather than looking across: the column
           // travels, matching Mod+Shift+H/L above, with Ctrl added to make
           // room for the monitor directions on the same two keys.
-          Mod+Ctrl+Alt+H { move-column-to-monitor-left; }
-          Mod+Ctrl+Alt+L { move-column-to-monitor-right; }
+          Mod+Ctrl+Alt+H { move-column-to-monitor-right; }
+          Mod+Ctrl+Alt+L { move-column-to-monitor-left; }
 
           // Nothing can watch for the TV dropping into standby: it holds the
           // HDMI link up, so the kernel and niri both still call the output

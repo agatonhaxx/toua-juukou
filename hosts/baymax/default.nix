@@ -63,10 +63,26 @@ in
         bluetooth.enable = true;
       };
 
+      services.mediamanager = {
+        enable = true;
+        dataDir = "/data/baymax/mediamanager";
+      };
+
       primaryUser = "eek";
       users.eek.homeModule = ../../user/eek;
     }
   ];
+
+  # MediaManager's libraries are the directories that already exist on the xfs
+  # volume and on the nvme partition mounted into it, not the subdirectories of
+  # `dataDir`. Point them there once the layout is settled; `image_directory`
+  # has no existing home and can stay where it is.
+  #
+  # services.media-manager.settings.misc = {
+  #   movie_directory = "/data/baymax/movies";
+  #   tv_directory = "/data/baymax/tv";
+  #   torrent_directory = "/data/baymax/qt";
+  # };
 
   # This host's wheel reports one detent more than once — a worn encoder, not a
   # driver problem. `mouse-wheel-debounce` (pkgs/) drops those reports by their
