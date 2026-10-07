@@ -18,24 +18,25 @@ in
 {
   imports = [ inputs.mediamanager-nix.nixosModules.default ];
 
-  options.toua.services.mediamanager = mkServiceOption "mediamanager" {
-    port = 8000;
+  options.toua.services.mediamanager =
+    mkServiceOption "mediamanager" {
+      port = 8000;
 
-    # No nginx in front of this one, so nothing else narrows the bind for us.
-    # It is reached on the LAN, or through an SSH tunnel from off it.
-    host = "127.0.0.1";
-  }
-  // {
-    dataDir = lib.mkOption {
-      type = lib.types.path;
-      default = "/var/lib/media-manager/media";
-      description = ''
-        Root for MediaManager's own files. The library paths default to
-        subdirectories of it; point `services.media-manager.settings.misc` at
-        the real media instead of leaving them here.
-      '';
+      # No nginx in front of this one, so nothing else narrows the bind for us.
+      # It is reached on the LAN, or through an SSH tunnel from off it.
+      host = "127.0.0.1";
+    }
+    // {
+      dataDir = lib.mkOption {
+        type = lib.types.path;
+        default = "/var/lib/media-manager/media";
+        description = ''
+          Root for MediaManager's own files. The library paths default to
+          subdirectories of it; point `services.media-manager.settings.misc` at
+          the real media instead of leaving them here.
+        '';
+      };
     };
-  };
 
   config = lib.mkIf cfg.enable {
     # MediaManager writes a random token secret on every start unless the
@@ -93,15 +94,6 @@ in
             username = "admin";
           };
 
-          transmission = {
-            enabled = false;
-            host = "localhost";
-            port = 9091;
-            username = "admin";
-            https_enabled = true;
-            path = "/transmission/rpc";
-          };
-
           sabnzbd = {
             enabled = false;
             host = "http://localhost";
@@ -118,34 +110,42 @@ in
             api_key = "";
             timeout_seconds = 60;
           };
-
-          jackett = {
-            enabled = false;
-            url = "http://localhost:9117";
-            api_key = "";
-            indexers = [ ];
-            timeout_seconds = 60;
-          };
         };
       };
     };
 
-    # MediaManager is pointed at libraries that usually live on the data disks,
-    # and it does not make them itself. Creating them here rather than inside
-    # the upstream module keeps them owned by the service user wherever they
-    # are pointed — which also means an existing library directory is chowned
-    # to the service user, so give it a fresh path if that is not wanted.
-    systemd.tmpfiles.settings."10-mediamanager" = lib.genAttrs [
-      mediaDirs.image_directory
-      mediaDirs.tv_directory
-      mediaDirs.movie_directory
-      mediaDirs.torrent_directory
-    ] (_: {
-      d = {
-        user = config.services.media-manager.user;
-        group = config.services.media-manager.group;
-        mode = "0755";
-      };
-    });
+    # MediaManager is pointed at directories that already exist on the data
+    # disks and it does not make them itself, so they are created here rather
+    # than inside the upstream module. `image_directory` is MediaManager's own
+    # and stays private, but the other three are the host's shared download
+    # tree, which the media group writes into: they carry the group and the
+    # setgid bit the other media services' directories do, the same shape as
+    # `sabnzbd.nix`'s download directories. An existing directory is chowned,
+    # so these belong on the tree the download clients fill, never a library.
+    systemd.tmpfiles.settings."10-mediamanager" =
+      {
+        "${mediaDirs.image_directory}"."d" = {
+          user = config.services.media-manager.user;
+          group = config.services.media-manager.group;
+          mode = "0755";
+        };
+      }
+      // lib.genAttrs
+        [
+          mediaDirs.tv_directory
+          mediaDirs.movie_directory
+          mediaDirs.torrent_directory
+        ]
+        (_: {
+          d = {
+            user = config.services.media-manager.user;
+            group = "media";
+            mode = "2775";
+          };
+        });
+
+    # The download tree and the libraries are shared through the media group,
+    # and membership is how this user reads either.
+    users.users.media-manager.extraGroups = [ "media" ];
   };
 }

@@ -136,16 +136,44 @@ in
     mode = "0700";
   };
 
-  # MediaManager's libraries are the directories that already exist on the xfs
-  # volume and on the nvme partition mounted into it, not the subdirectories of
-  # `dataDir`. Point them there once the layout is settled; `image_directory`
-  # has no existing home and can stay where it is.
+  # MediaManager's scan roots are the finished-download tree, not the libraries:
+  # it lists the direct children of these two as import candidates and excludes
+  # only a path that is itself a configured library. They sit on the xfs volume
+  # with the libraries, which is what makes an import a hardlink and not a copy.
   #
-  # services.media-manager.settings.misc = {
-  #   movie_directory = "/data/baymax/movies";
-  #   tv_directory = "/data/baymax/tv";
-  #   torrent_directory = "/data/baymax/qt";
-  # };
+  # The libraries are where an import is organised to, and neither `Default` nor
+  # an unset library is one of them — both mean `movie_directory` — so every
+  # movie and show needs its library picked in the UI. `image_directory` has no
+  # existing home and stays under `dataDir`.
+  #
+  # The download clients save into the same tree: unfinished work on the nvme,
+  # finished work here, so the spindles take one sequential write per item.
+  services.media-manager.settings.misc = {
+    movie_directory = "/data/baymax/downloads/movies";
+    tv_directory = "/data/baymax/downloads/tv";
+    torrent_directory = "/data/baymax/downloads";
+
+    movie_libraries = [ { name = "Movies"; path = "/data/baymax/movies"; } ];
+    tv_libraries = [
+      { name = "TV"; path = "/data/baymax/tv"; }
+      { name = "Anime"; path = "/data/baymax/anime"; }
+    ];
+  };
+
+  # MediaManager's rule creates the three directories it is pointed at; these
+  # are the finished-download categories it is not, made here so the clients
+  # write into a setgid directory of the media group rather than one of their
+  # own. `20-` so it runs after that rule has made their parent.
+  systemd.tmpfiles.settings."20-media-downloads" = lib.genAttrs [
+    "/data/baymax/downloads/anime"
+    "/data/baymax/downloads/music"
+  ] (_: {
+    d = {
+      user = "media-manager";
+      group = "media";
+      mode = "2775";
+    };
+  });
 
   # This host's wheel reports one detent more than once — a worn encoder, not a
   # driver problem. `mouse-wheel-debounce` (pkgs/) drops those reports by their
