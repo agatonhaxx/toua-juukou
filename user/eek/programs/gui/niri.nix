@@ -317,8 +317,11 @@ in
       }
       // Spawn essential services at startup
       spawn-at-startup "waybar"
-      // Pick a random wallpaper on each login
-      spawn-sh-at-startup "swaybg -i \"$(find ${config.home.homeDirectory}/Pictures/wallpapers -type f | shuf -n1)\""
+      // Pick a random wallpaper on each login from the collection checked out
+      // under ~/dev/eek/wallpapers, skipping .git so swaybg is never handed a
+      // file out of it. The collection is meant to become a flake input, so
+      // that no host needs the checkout.
+      spawn-sh-at-startup "swaybg -i \"$(find ${config.home.homeDirectory}/dev/eek/wallpapers -type f -not -path '*/.git/*' | shuf -n1)\""
       spawn-at-startup "fcitx5"
       // Idle management: dim after 15 min, lock (GDM) after 30 min
       spawn-at-startup "swayidle" "timeout" "900" "brightnessctl set 30%" "resume" "brightnessctl set 100%" "timeout" "1800" "loginctl lock-session"

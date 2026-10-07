@@ -86,14 +86,21 @@ in
           musicDir = "/data/baymax/music";
         };
 
-        # The save paths are the WebUI's own, and point into
-        # /data/baymax/qt/download/torrent.
+        prowlarr.dataDir = "/data/baymax/qt/prowlarr";
+
+        # The WebUI owns its paths: unfinished work in
+        # /data/baymax/qt/download/torrent on the nvme, finished work in the
+        # download tree below.
         qbittorrent.dataDir = "/data/baymax/qt/qbittorrent";
 
+        # Assembling stays on the nvme, but finishing means the tree
+        # MediaManager scans. There is one scan root per type and the folder is
+        # set per category in the WebUI, so `anime` finishes in the TV tree with
+        # `tv` rather than in one of its own, and both land in the TV library.
         sabnzbd = {
           dataDir = "/data/baymax/qt/sabnzbd";
           incompleteDir = "/data/baymax/qt/download/usenet/incomplete";
-          completeDir = "/data/baymax/qt/download/usenet";
+          completeDir = "/data/baymax/downloads";
         };
 
         slskd = {
@@ -114,8 +121,8 @@ in
   # to each other's files: every service module adds its user to it. The trees
   # themselves were regrouped once, since they predate the group:
   #
-  #   sudo chgrp -R media /data/baymax/{movies,tv,anime,music} /data/baymax/qt/download
-  #   sudo chmod -R g+rwX,g+s /data/baymax/{movies,tv,anime,music} /data/baymax/qt/download
+  #   sudo chgrp -R media /data/baymax/{movies,tv,music} /data/baymax/qt/download
+  #   sudo chmod -R g+rwX,g+s /data/baymax/{movies,tv,music} /data/baymax/qt/download
   #
   # `g+rwX` because the libraries were not group-writable, and the setgid bit
   # because that is what keeps the group on everything written below them. The
@@ -148,32 +155,191 @@ in
   #
   # The download clients save into the same tree: unfinished work on the nvme,
   # finished work here, so the spindles take one sequential write per item.
+  #
+  # `torrent_directory` is where MediaManager would add torrents of its own, and
+  # no client is pointed at it, so it is a subdirectory of the tree rather than
+  # the tree's root: the tmpfiles rule below takes ownership of every path it is
+  # given, and the root is SABnzbd's complete directory.
   services.media-manager.settings.misc = {
     movie_directory = "/data/baymax/downloads/movies";
     tv_directory = "/data/baymax/downloads/tv";
-    torrent_directory = "/data/baymax/downloads";
+    torrent_directory = "/data/baymax/downloads/torrents";
 
-    movie_libraries = [ { name = "Movies"; path = "/data/baymax/movies"; } ];
+    movie_libraries = [
+      {
+        name = "Movies";
+        path = "/data/baymax/movies";
+      }
+    ];
     tv_libraries = [
-      { name = "TV"; path = "/data/baymax/tv"; }
-      { name = "Anime"; path = "/data/baymax/anime"; }
+      {
+        name = "TV";
+        path = "/data/baymax/tv";
+      }
     ];
   };
 
-  # MediaManager's rule creates the three directories it is pointed at; these
-  # are the finished-download categories it is not, made here so the clients
-  # write into a setgid directory of the media group rather than one of their
-  # own. `20-` so it runs after that rule has made their parent.
-  systemd.tmpfiles.settings."20-media-downloads" = lib.genAttrs [
-    "/data/baymax/downloads/anime"
-    "/data/baymax/downloads/music"
-  ] (_: {
-    d = {
-      user = "media-manager";
-      group = "media";
-      mode = "2775";
-    };
-  });
+  # Scoring rules rank what a search turns up. A rule runs only when a rule set
+  # names it, and a set runs for the media it is scoped to: `ALL_TV` and
+  # `ALL_MOVIES` are every show and film whatever library it is filed under, so
+  # the two sets below stay out of each other's way. Keywords are substrings of
+  # the result title, folded to case, and `negate` would make a rule fire on
+  # their absence instead. A result that ends at zero or below is dropped, which
+  # is how the negative rules remove rather than merely rank.
+  #
+  # The size MediaManager gets from the indexer is never scored — nothing in the
+  # config reads it — so "not huge" has to be said in the tokens that imply it,
+  # which is what the movie rules do.
+  #
+  # TV ranks the codec and the groups: the groups are worth more than the codec,
+  # so one of them wins against an h265 release from anywhere else, and the
+  # anime groups are here because anime imports into this same library now.
+  services.media-manager.settings.indexers = {
+    title_scoring_rules = [
+      {
+        name = "prefer_h265";
+        keywords = [
+          "h265"
+          "hevc"
+          "x265"
+        ];
+        score_modifier = 100;
+        negate = false;
+      }
+      {
+        name = "prefer_groups";
+        keywords = [
+          # keep-sorted start
+          "ToonsHub"
+          "BlackRabbit"
+          "Trix"
+          "Ironclad"
+          "SubsPlease"
+          "Erai-raws"
+          "Judas"
+          "ASW"
+          "Moozzi2"
+          "Anime Time"
+          # keep-sorted end
+        ];
+        score_modifier = 500;
+        negate = false;
+      }
+
+      # Movies: 1080p is 100, BluRay another 100 and x265 50 more, so a 1080p
+      # BluRay encode tops out at 250, or 750 from one of the groups below. The
+      # two negatives outweigh all of that together, so no 4K or remuxed release
+      # survives the sort. The codec rule repeats TV's keywords on purpose: a
+      # separate name is what lets the two media types weigh the codec apart.
+      {
+        name = "prefer_1080p";
+        keywords = [
+          "1080p"
+        ];
+        score_modifier = 100;
+        negate = false;
+      }
+      {
+        name = "prefer_bluray";
+        keywords = [
+          "bluray"
+          "bdrip"
+        ];
+        score_modifier = 100;
+        negate = false;
+      }
+      {
+        name = "prefer_x265";
+        keywords = [
+          "x265"
+          "h265"
+          "hevc"
+        ];
+        score_modifier = 50;
+        negate = false;
+      }
+      {
+        name = "no_4k";
+        keywords = [
+          "2160p"
+          "4k"
+          "uhd"
+        ];
+        score_modifier = -1000;
+        negate = false;
+      }
+      {
+        name = "no_remux";
+        keywords = [
+          "remux"
+        ];
+        score_modifier = -1000;
+        negate = false;
+      }
+
+      # The groups worth waiting for: 1080p BluRay encodes at a sensible size,
+      # x264 and x265 both, which is what the rules above are already ranking.
+      # Remux-only groups (`Framestor`, `WiLDCAT`, `KRaLiMaRKo`) are absent
+      # because `no_remux` drops their releases whatever they score, and the
+      # groups that only do tiny encodes (`YIFY`, `r00t`, `GALAXY`) sit below
+      # the size this set aims at. Matching is by substring, so a tag that hides
+      # inside an ordinary word is out as well — `EVO` in "Evolution", `HONE` in
+      # "Phone", `iFT` in "Gift".
+      {
+        name = "prefer_movie_groups";
+        keywords = [
+          "SPARKS"
+          "GECKOS"
+          "AMIABLE"
+          "Tigole"
+          "PSA"
+          "QxR"
+          "Vyndros"
+          "TOMMY"
+          "EDITH"
+          "FRDS"
+          "WiKi"
+          "RARBG"
+        ];
+        score_modifier = 500;
+        negate = false;
+      }
+    ];
+
+    scoring_rule_sets = [
+      {
+        name = "tv";
+        libraries = [ "ALL_TV" ];
+        rule_names = [
+          "prefer_h265"
+          "prefer_groups"
+        ];
+      }
+      {
+        name = "movies";
+        libraries = [ "ALL_MOVIES" ];
+        rule_names = [
+          "prefer_1080p"
+          "prefer_bluray"
+          "prefer_x265"
+          "no_4k"
+          "no_remux"
+          "prefer_movie_groups"
+        ];
+      }
+    ];
+  };
+
+  # MediaManager's rule creates the directories it is pointed at; this is the
+  # one finished-download category it has no scan root for — music never reaches
+  # it — made here so the clients write into a setgid directory of the media
+  # group rather than one of their own. `20-` so it runs after the rules that
+  # make the tree above it.
+  systemd.tmpfiles.settings."20-media-downloads"."/data/baymax/downloads/music".d = {
+    user = "media-manager";
+    group = "media";
+    mode = "2775";
+  };
 
   # This host's wheel reports one detent more than once — a worn encoder, not a
   # driver problem. `mouse-wheel-debounce` (pkgs/) drops those reports by their

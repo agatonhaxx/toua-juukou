@@ -284,6 +284,7 @@ The media services run on Baymax and are reached over the LAN:
 - Jellyfin: `http://baymax:8096`
 - qBittorrent: `http://baymax:8080` — its save paths and password are the WebUI's
 - SABnzbd: `http://baymax:8081`
+- Prowlarr: `http://baymax:9696`
 - slskd: `http://baymax:5030`, which needs
   `just secret secrets/services/slskd.yaml` to exist before it is enabled
 - Navidrome: `http://baymax:4533`

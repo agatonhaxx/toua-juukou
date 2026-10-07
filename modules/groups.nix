@@ -83,6 +83,7 @@
       immich.enable = true;
       jellyfin.enable = true;
       navidrome.enable = true;
+      prowlarr.enable = true;
       qbittorrent.enable = true;
       sabnzbd.enable = true;
       slskd.enable = true;
