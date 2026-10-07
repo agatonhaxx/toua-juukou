@@ -55,6 +55,11 @@ in
   toua = lib.mkMerge [
     (mkDefaults groups.dev)
     (mkDefaults groups.agents)
+
+    # Only the services: the desktop profile above already contributes the
+    # group's programs, and these are the ones that need the data volume and the
+    # group the services share.
+    (mkDefaults { inherit (groups.media) services; })
     {
       profiles.desktop.enable = true;
 
@@ -63,15 +68,80 @@ in
         bluetooth.enable = true;
       };
 
-      services.mediamanager = {
-        enable = true;
-        dataDir = "/data/baymax/mediamanager";
+      # Every media service keeps its state on the nvme partition mounted at
+      # /data/baymax/qt, next to the download trees they all work in.
+      services = {
+        immich.dataDir = "/data/baymax/qt/immich";
+        jellyfin.dataDir = "/data/baymax/qt/jellyfin";
+
+        # MediaManager is not one of the group's services: only its own data
+        # moves here, its libraries stay where they are, see below.
+        mediamanager = {
+          enable = true;
+          dataDir = "/data/baymax/qt/mediamanager";
+        };
+
+        navidrome = {
+          dataDir = "/data/baymax/qt/navidrome";
+          musicDir = "/data/baymax/music";
+        };
+
+        # The save paths are the WebUI's own, and point into
+        # /data/baymax/qt/download/torrent.
+        qbittorrent.dataDir = "/data/baymax/qt/qbittorrent";
+
+        sabnzbd = {
+          dataDir = "/data/baymax/qt/sabnzbd";
+          incompleteDir = "/data/baymax/qt/download/usenet/incomplete";
+          completeDir = "/data/baymax/qt/download/usenet";
+        };
+
+        slskd = {
+          dataDir = "/data/baymax/qt/slskd";
+
+          # What it offers on the Soulseek network; the unit sees it read-only.
+          shares = [ "/data/baymax/music" ];
+        };
       };
 
       primaryUser = "eek";
       users.eek.homeModule = ../../user/eek;
     }
   ];
+
+  # The media services and eek work in the same trees under /data/baymax — the
+  # libraries and the download trees — and this group is what gives them access
+  # to each other's files: every service module adds its user to it. The trees
+  # themselves were regrouped once, since they predate the group:
+  #
+  #   sudo chgrp -R media /data/baymax/{movies,tv,anime,music} /data/baymax/qt/download
+  #   sudo chmod -R g+rwX,g+s /data/baymax/{movies,tv,anime,music} /data/baymax/qt/download
+  #
+  # `g+rwX` because the libraries were not group-writable, and the setgid bit
+  # because that is what keeps the group on everything written below them. The
+  # services' own state directories are deliberately not in this group.
+  users.groups.media = { };
+  users.users.eek.extraGroups = [ "media" ];
+
+  # One instance for the media services that need a database — MediaManager and
+  # immich — with its cluster on the data volume next to the state it belongs
+  # to. The module points the unit at `dataDir` and runs initdb there, but
+  # creates nothing itself, so the directory is created here. A cluster left
+  # behind in /var/lib/postgresql is not migrated.
+  #
+  # The immich library is older than this configuration: a Docker install served
+  # it, and that install's dumps are still in /data/baymax/qt/immich/backups.
+  # They come from PostgreSQL 14 with pgvecto.rs, which this cluster is not, so
+  # the library is loaded into it once, by hosts/baymax/immich-restore.sh, after
+  # the first switch — shelter, preprocess, load, start immich, verify. Both the
+  # script and this note go once the library has been checked.
+  services.postgresql.dataDir = "/data/baymax/qt/postgres";
+
+  systemd.tmpfiles.settings."10-postgresql-media"."/data/baymax/qt/postgres".d = {
+    user = "postgres";
+    group = "postgres";
+    mode = "0700";
+  };
 
   # MediaManager's libraries are the directories that already exist on the xfs
   # volume and on the nvme partition mounted into it, not the subdirectories of

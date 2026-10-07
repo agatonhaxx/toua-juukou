@@ -74,7 +74,7 @@ selected by a profile, host, or user.
 | Host | Profile | Purpose |
 | --- | --- | --- |
 | `bender` | `desktop` | NixOS laptop |
-| `baymax` | `desktop` | NixOS desktop workstation and backup destination |
+| `baymax` | `desktop` | NixOS desktop workstation, media server, and backup destination |
 | `mac` | `mac` | nix-darwin laptop |
 | `ponkotsu` | `wsl` | WSL development machine |
 | `wall-e` | `headless` | Public services and client backup destination |
@@ -136,7 +136,9 @@ module, because it answers one failing wheel and not a fleet-wide policy.
    `services.nginx` or `toua.domain` belongs in `modules/nixos/services/`.
 5. Add suitable services to a group in `modules/groups.nix` and select it in a
    profile or host. The `network` group selects Tailscale; `server` selects the
-   infrastructure stack. Service enable options always default to false.
+   infrastructure stack; `media.services` selects the media stack, which needs a
+   data volume and a group its services share, so no profile selects it. Service
+   enable options always default to false.
 
 Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
 `toua.services.nginx.enable`. Vaultwarden also requires
@@ -276,6 +278,55 @@ Service URLs:
 - MediaManager: `http://127.0.0.1:8000` on Baymax, which is not proxied; reach it
   over the LAN or an SSH tunnel. Its `toua.services.mediamanager` secret needs
   `just secret secrets/services/mediamanager.yaml` to exist before it is enabled.
+
+The media services run on Baymax and are reached over the LAN:
+
+- Jellyfin: `http://baymax:8096`
+- qBittorrent: `http://baymax:8080` — its save paths and password are the WebUI's
+- SABnzbd: `http://baymax:8081`
+- slskd: `http://baymax:5030`, which needs
+  `just secret secrets/services/slskd.yaml` to exist before it is enabled
+- Navidrome: `http://baymax:4533`
+- immich: `http://baymax:2283`
+
+They keep their state under `/data/baymax/qt` and share the libraries and
+download trees through the `media` group, which your user is in as well; the
+trees were regrouped once and the command for it is in
+`hosts/baymax/default.nix`.
+
+## Recovering the immich database
+
+The immich library on Baymax predates this configuration — a Docker install
+served it — and the dumps of that install's PostgreSQL 14 database are in
+`/data/baymax/qt/immich/backups`. They were taken with pgvecto.rs and are loaded
+into the cluster here once, by `hosts/baymax/immich-restore.sh`, which rewrites
+them for it:
+
+```sh
+just switch                            # creates the cluster, the role and the database
+sudo ./hosts/baymax/immich-restore.sh  # shelter, preprocess, load
+sudo systemctl start immich-server     # immich's migrations 2.7.5 -> 3.2.1 run here
+sudo ./hosts/baymax/immich-restore.sh verify
+```
+
+The dumps are copied out of the directory immich's own backup job writes into
+and prunes, and nothing is deleted, so the load can be repeated from the same
+dump. immich rebuilds `face_index` and `clip_index` itself on its first start.
+
+No immich version is pinned for it. The dump's 68 rows in `kysely_migrations`
+are the first 68 entries of the `ORDER` file in `server/src/schema/migrations/`
+of the 3.2.1 source, so the 28 migrations left are a clean continuation. That
+was checked against
+
+```sh
+nix build --out-link /tmp/immich-src .#nixosConfigurations.baymax.config.services.immich.package.src
+ls /tmp/immich-src/server/src/schema/migrations/
+```
+
+and `SELECT name FROM kysely_migrations;`; redo it if the dump or the package
+moves and a recorded name is no longer upstream — stepping through an
+intermediate release is the alternative. Delete the script and this section once
+the library has been checked.
 
 ## Known gaps
 

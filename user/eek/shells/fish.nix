@@ -12,15 +12,12 @@
 
         "gp" = "git push";
         "gc" = "git commit -m";
-        "gs" = "git switch";
+        "gs" = "git status";
         "ga" = "git add";
       };
 
       shellAliases = {
         "l" = "eza";
-        "ll" = "l -la";
-
-        "nixpkgs-using" = "with_gh_token nixpkgs-using";
       };
 
       plugins = [

@@ -66,13 +66,28 @@
     };
   };
 
-  media.programs = {
-    # keep-sorted start
-    ffmpeg.enable = true;
-    flow.enable = true;
-    mpv.enable = true;
-    qbittorrent.enable = true;
-    # keep-sorted end
+  media = {
+    programs = {
+      # keep-sorted start
+      ffmpeg.enable = true;
+      flow.enable = true;
+      mpv.enable = true;
+      qbittorrent.enable = true;
+      # keep-sorted end
+    };
+
+    # The services share a data volume and a group of their own, which not every
+    # machine has, so no profile selects them: a host opts in.
+    services = {
+      # keep-sorted start
+      immich.enable = true;
+      jellyfin.enable = true;
+      navidrome.enable = true;
+      qbittorrent.enable = true;
+      sabnzbd.enable = true;
+      slskd.enable = true;
+      # keep-sorted end
+    };
   };
 
   mac.programs = {

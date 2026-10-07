@@ -71,20 +71,21 @@
     options = [ "noatime" ];
   };
 
-  # Nested inside the xfs volume above, so it must not mount until that one
-  # has: systemd otherwise mounts the two in parallel and the xfs can land on
-  # top of the nvme, hiding it. `depends` is what becomes the mount unit's
-  # `x-systemd.requires-mounts-for`.
+  # Nested inside the xfs volume above. systemd orders a nested mount after its
+  # parent on its own, so ordering is not what this entry has to get right.
   #
-  # `subvol=qt` is what the partition was mounted with before this entry was
-  # lost: the btrfs root is not the data, so without it the mount succeeds and
-  # shows a single empty directory named `qt` in place of the contents.
-  # `compress=zstd` was on it too.
+  # There is deliberately no `subvol=` here: `btrfs subvolume list` on this
+  # filesystem is empty — autobrr, sonarr, qbittorrent and the rest all live in
+  # the top-level tree, and the default subvolume is FS_TREE. The `subvol=qt`
+  # this entry used to carry (taken from the volume's *label*) named nothing,
+  # so mount failed with `fsconfig() failed: No such file or directory` and
+  # local-fs.target dropped the machine into an emergency shell every time.
+  #
+  # `nofail` so a media volume can never do that again.
   fileSystems."/data/baymax/qt" = {
     device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_500GB_S466NX0K927369W-part1";
     fsType = "btrfs";
-    options = [ "compress=zstd" "noatime" "subvol=qt" ];
-    depends = [ "/data/baymax" ];
+    options = [ "compress=zstd" "noatime" "nofail" ];
   };
 
   swapDevices = [ { device = "/var/swapfile"; } ];

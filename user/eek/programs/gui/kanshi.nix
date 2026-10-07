@@ -44,14 +44,14 @@ in
               scale = 1.0;
             }
             {
-              # Samsung 4K TV, right. Scale 2 puts it at 1920x1080 logical,
+              # Samsung 4K TV, right. Scale 1.5 puts it at 2560x1440 logical,
               # which is what its size and viewing distance want. The mode is
               # spelled out because the TV prefers 3840x2160@30 and will pick
               # it on its own; @60 is in its EDID.
               criteria = "Samsung Electric Company SAMSUNG *";
               mode = "3840x2160@60Hz";
               position = "3440,0";
-              scale = 2.0;
+              scale = 1.5;
             }
           ];
         };
