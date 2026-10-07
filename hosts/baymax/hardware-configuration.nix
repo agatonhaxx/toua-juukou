@@ -88,5 +88,13 @@
     options = [ "compress=zstd" "noatime" "nofail" ];
   };
 
-  swapDevices = [ { device = "/var/swapfile"; } ];
+  # Nothing created this file but the installer once did: nixpkgs generates the
+  # unit that makes a swap device only for entries carrying a `size` (or using
+  # random encryption), so this pointed at a file that was not there. `/var` is
+  # on btrfs, and a size routes creation through `btrfs filesystem mkswapfile`,
+  # which also sets nocow and turns compression off for the file, as a btrfs
+  # swapfile requires. 16 GiB for 31 GiB of RAM, headroom rather than a resume
+  # target: no hibernation is configured, and a btrfs swapfile would need a
+  # `resume_offset` for that anyway.
+  swapDevices = [ { device = "/var/swapfile"; size = 16384; } ];
 }

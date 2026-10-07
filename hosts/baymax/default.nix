@@ -128,13 +128,6 @@ in
   # to. The module points the unit at `dataDir` and runs initdb there, but
   # creates nothing itself, so the directory is created here. A cluster left
   # behind in /var/lib/postgresql is not migrated.
-  #
-  # The immich library is older than this configuration: a Docker install served
-  # it, and that install's dumps are still in /data/baymax/qt/immich/backups.
-  # They come from PostgreSQL 14 with pgvecto.rs, which this cluster is not, so
-  # the library is loaded into it once, by hosts/baymax/immich-restore.sh, after
-  # the first switch — shelter, preprocess, load, start immich, verify. Both the
-  # script and this note go once the library has been checked.
   services.postgresql.dataDir = "/data/baymax/qt/postgres";
 
   systemd.tmpfiles.settings."10-postgresql-media"."/data/baymax/qt/postgres".d = {

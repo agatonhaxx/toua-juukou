@@ -294,40 +294,6 @@ download trees through the `media` group, which your user is in as well; the
 trees were regrouped once and the command for it is in
 `hosts/baymax/default.nix`.
 
-## Recovering the immich database
-
-The immich library on Baymax predates this configuration — a Docker install
-served it — and the dumps of that install's PostgreSQL 14 database are in
-`/data/baymax/qt/immich/backups`. They were taken with pgvecto.rs and are loaded
-into the cluster here once, by `hosts/baymax/immich-restore.sh`, which rewrites
-them for it:
-
-```sh
-just switch                            # creates the cluster, the role and the database
-sudo ./hosts/baymax/immich-restore.sh  # shelter, preprocess, load
-sudo systemctl start immich-server     # immich's migrations 2.7.5 -> 3.2.1 run here
-sudo ./hosts/baymax/immich-restore.sh verify
-```
-
-The dumps are copied out of the directory immich's own backup job writes into
-and prunes, and nothing is deleted, so the load can be repeated from the same
-dump. immich rebuilds `face_index` and `clip_index` itself on its first start.
-
-No immich version is pinned for it. The dump's 68 rows in `kysely_migrations`
-are the first 68 entries of the `ORDER` file in `server/src/schema/migrations/`
-of the 3.2.1 source, so the 28 migrations left are a clean continuation. That
-was checked against
-
-```sh
-nix build --out-link /tmp/immich-src .#nixosConfigurations.baymax.config.services.immich.package.src
-ls /tmp/immich-src/server/src/schema/migrations/
-```
-
-and `SELECT name FROM kysely_migrations;`; redo it if the dump or the package
-moves and a recorded name is no longer upstream — stepping through an
-intermediate release is the alternative. Delete the script and this section once
-the library has been checked.
-
 ## Known gaps
 
 - **Borg backups are not wired up.** `modules/nixos/services/borgbackup.nix`
