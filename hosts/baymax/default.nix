@@ -179,6 +179,41 @@ in
     ];
   };
 
+  # The module ships every client switched off, with the credentials left out
+  # on purpose, so what is turned on here is what this host actually runs:
+  # Prowlarr for searches and qBittorrent for the torrents. Both credentials
+  # arrive from the sops env file rather than this file, as
+  # `MEDIAMANAGER_INDEXERS__PROWLARR__API_KEY` and
+  # `MEDIAMANAGER_TORRENTS__QBITTORRENT__PASSWORD` — the module documents the
+  # scheme.
+  #
+  # Prowlarr is only an API to MediaManager, which enumerates and queries the
+  # indexers itself, so Prowlarr needs no download client and no App entry:
+  # those serve Prowlarr's own manual grab and the Sonarr/Radarr sync, and
+  # neither exists here. SABnzbd is left off until there are usenet indexers to
+  # feed it — MediaManager picks a client per result, and a usenet result with
+  # no usenet client raises rather than falling back.
+  #
+  # MediaManager creates this category in qBittorrent itself and adds every
+  # torrent into it with the release title as the path below, so the save path
+  # has to be `torrent_directory` as qBittorrent sees it — same host, so the
+  # same path. What it grabs finishes there and the import job hardlinks it into
+  # a library; the per-type categories in the WebUI are for manual grabs, which
+  # arrive through the scan roots above instead.
+  services.media-manager.settings = {
+    torrents.qbittorrent = {
+      enabled = true;
+      host = "http://localhost";
+      port = 8080;
+      category_save_path = "/data/baymax/downloads/torrents";
+    };
+
+    indexers.prowlarr = {
+      enabled = true;
+      url = "http://localhost:9696";
+    };
+  };
+
   # Scoring rules rank what a search turns up. A rule runs only when a rule set
   # names it, and a set runs for the media it is scoped to: `ALL_TV` and
   # `ALL_MOVIES` are every show and film whatever library it is filed under, so
@@ -207,7 +242,7 @@ in
         negate = false;
       }
       {
-        name = "prefer_groups";
+        name = "prefer_tv_groups";
         keywords = [
           # keep-sorted start
           "ToonsHub"
@@ -312,7 +347,7 @@ in
         libraries = [ "ALL_TV" ];
         rule_names = [
           "prefer_h265"
-          "prefer_groups"
+          "prefer_tv_groups"
         ];
       }
       {
