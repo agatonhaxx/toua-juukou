@@ -9,8 +9,8 @@
   # installs git for every user, this module says who commits.
   programs.git = lib.mkIf config.programs.git.enable {
     settings.user = {
-      name = "eek";
-      email = "glenn@huxe.eu";
+      name = "Glenn Dahl";
+      email = "glenn.dahl@svenskaspel.se";
     };
 
     # Work repositories live in one directory, so the identity follows the path
@@ -20,8 +20,19 @@
     # itself, so this include stays unconditional and inert elsewhere. Hosts
     # without the template simply do not get the include. Signing keys belong
     # here too, one per identity, once they exist.
-    includes = lib.optional (osConfig.sops.templates ? "work-git-include") {
-      path = osConfig.sops.templates."work-git-include".path;
-    };
+    includes = [
+      {
+        condition = "gitdir:~/dev/eek/";
+        contents = {
+          name = "eek";
+          email = "glenn@huxe.eu";
+          core.sshCommand = "ssh -i ~/.ssh/id_ed25519_eek -o IdentitiesOnly=yes";
+        };
+      }
+      {
+        condition = "gitdir:~/dev/svs/";
+        contents.core.sshCommand = "ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes";
+      }
+    ];
   };
 }

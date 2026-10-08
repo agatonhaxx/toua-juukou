@@ -6,7 +6,7 @@ in
 {
   homebrew.casks = mkEnabledPackages cfg {
     bitwarden = "bitwarden";
-    chromium = "ungoogled-chromium";
+    chromium = "google-chrome";
     sf-symbols = "sf-symbols";
   };
   homebrew.brews = mkEnabledPackages cfg {

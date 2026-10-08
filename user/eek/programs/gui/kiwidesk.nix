@@ -9,7 +9,7 @@ let
   colors = config.palette.mocha.colors;
   appRules = {
     "com.github.wez.wezterm" = 1;
-    "org.chromium.Chromium" = 1;
+    "com.google.Chrome" = 1;
     "org.mozilla.firefox" = 1;
     "com.microsoft.Outlook" = 2;
     "com.microsoft.teams2" = 2;
@@ -21,6 +21,8 @@ in
     # Ctrl+Alt is the macOS equivalent of niri's Mod key. Declaring bindings in
     # init.lua makes the shortcut set declarative; KiwiDesk will show the file
     # in its Settings editor instead of maintaining a separate gui.json keymap.
+    # Do not adopt into the visual editor: it replaces init.lua with a
+    # commented backup and cannot preserve these Lua closures and helpers.
     "KiwiDesk/init.lua".text = ''
       local mod = "ctrl+alt+"
       local move = "ctrl+alt+shift+"
@@ -73,6 +75,11 @@ in
         width_step_by_space[tostring(space)] = 0
         scroll.set_slot_size_override(space, "100%")
       end
+
+      -- Hide both KiwiShelf bars on every display.
+      space_bar.set_enabled(false)
+      monocle.set_app_bar_enabled(false)
+      scroll.set_app_bar_enabled(false)
 
       -- Catppuccin Mocha
       border.set_enabled(true)
@@ -214,7 +221,7 @@ in
   };
 
   # Profiles override init.lua. Enforce Starter's scrolling layouts, space
-  # list, app assignments, display pins and Catppuccin colors.
+  # list, app assignments, display pins, hidden bars and Catppuccin colors.
   home.activation.kiwideskStarterColors = lib.mkIf enabled (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       profile_path=${lib.escapeShellArg "${config.xdg.configHome}/KiwiDesk/profiles/Starter.json"}
@@ -259,6 +266,9 @@ in
                 } else {} end
               )
             )) |
+            .settings.space_bar.enabled = false |
+            .settings.layout.monocle.app_bar.enabled = false |
+            .settings.layout.scroll.app_bar.enabled = false |
             .settings.border.enabled = true |
             .settings.border.width = 4 |
             .settings.border.focused_color = $mauve |
