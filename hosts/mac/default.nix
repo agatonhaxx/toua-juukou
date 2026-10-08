@@ -59,50 +59,6 @@ in
         # one literal key called `work.hostname`.
         key = "work/hostname";
       };
-
-      work-git-user-name = {
-        sopsFile = secretsFile;
-        key = "work/git/userName";
-      };
-
-      work-git-email = {
-        sopsFile = secretsFile;
-        key = "work/git/email";
-      };
-
-      work-git-default-path = {
-        sopsFile = secretsFile;
-        key = "work/git/defaultPath";
-      };
-    };
-
-    templates = {
-      # What git applies inside the work directory.
-      work-git-identity = {
-        owner = config.toua.primaryUser;
-        mode = "400";
-        content = ''
-          [user]
-          	name = ${config.sops.placeholder.work-git-user-name}
-          	email = ${config.sops.placeholder.work-git-email}
-        '';
-      };
-
-      # The `gitdir:` condition has to be a literal when git reads it, and the
-      # user module is evaluated long before any secret is decrypted, so the
-      # condition cannot live there without putting the work path in the repo.
-      # Git's `includeIf` takes only a path, so this file carries the condition
-      # and points at the identity above; the user module includes this file
-      # unconditionally, and it does nothing unless a repository is under the
-      # configured directory.
-      work-git-include = {
-        owner = config.toua.primaryUser;
-        mode = "400";
-        content = ''
-          [includeIf "gitdir:${config.sops.placeholder.work-git-default-path}"]
-          	path = ${config.sops.templates.work-git-identity.path}
-        '';
-      };
     };
   };
 

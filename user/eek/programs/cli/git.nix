@@ -24,8 +24,10 @@
       {
         condition = "gitdir:~/dev/eek/";
         contents = {
-          name = "eek";
-          email = "glenn@huxe.eu";
+          user = {
+            name = "eek";
+            email = "glenn@huxe.eu";
+          };
           core.sshCommand = "ssh -i ~/.ssh/id_ed25519_eek -o IdentitiesOnly=yes";
         };
       }
