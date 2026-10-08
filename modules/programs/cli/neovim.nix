@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -28,13 +29,13 @@ in
 {
   programs.neovim.enable = lib.mkDefault config.toua.programs.neovim.enable;
 
-  xdg.mimeApps = lib.mkIf enabled {
+  xdg.mimeApps = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && enabled) {
     enable = true;
     associations.added = associations;
     defaultApplications = associations;
   };
 
-  xdg.desktopEntries.nvim = lib.mkIf enabled {
+  xdg.desktopEntries.nvim = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && enabled) {
     name = "Neovim";
     genericName = "Text Editor";
     comment = "Edit text files";

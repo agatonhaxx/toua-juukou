@@ -23,7 +23,7 @@ in
     package = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin null;
   };
 
-  xdg.mimeApps = lib.mkIf config.programs.chromium.enable {
+  xdg.mimeApps = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && config.programs.chromium.enable) {
     enable = true;
     associations.added = associations;
     defaultApplications = associations;
