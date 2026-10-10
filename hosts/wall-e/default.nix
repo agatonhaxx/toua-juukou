@@ -23,26 +23,17 @@
     sounds.enable = false;
   };
 
-  # Set as a default rather than on kanidm's certificate because it is a fact
-  # about this host's resolver, and it applies to every certificate issued here.
-  #
-  # lego's propagation check asks the box's own resolver — here the
-  # systemd-resolved stub at 127.0.0.53 — which never returns the challenge TXT
-  # record even though Cloudflare publishes it straight away, so every order
-  # died on "time limit exceeded". Cloudflare's authoritative nameservers do
-  # answer, so only the recursive half of the check is dropped.
+  # A fact about this host's resolver, so it is set as a default: lego's
+  # propagation check asks the 127.0.0.53 stub, which never sees the TXT record.
   security.acme.defaults.extraLegoFlags = [ "--dns.propagation.disable-rns" ];
 
-  # Static, mirroring the shape the dotfiles repo gives its Hetzner host. Hetzner
-  # hands the public address out as a /32 routed through a link-local gateway, so
-  # the address and the route to that gateway are both spelled out. `interface` is
-  # not optional on either gateway when `useNetworkd` is on — nixpkgs asserts it.
+  # Static, like the dotfiles repo's Hetzner host: a /32 routed via a link-local
+  # gateway, and `interface` is required on both gateways under `useNetworkd`.
   networking = {
     hostName = "wall-e";
 
-    # One NIC, so `net.ifnames=0` names it eth0, which is what the stock image
-    # calls it and what the addresses below are bound to. That also makes the MAC
-    # udev rule dotfiles carries unnecessary here.
+    # One NIC, so `net.ifnames=0` names it eth0, as the stock image and the
+    # addresses below assume.
     usePredictableInterfaceNames = false;
     useNetworkd = true;
 
@@ -102,29 +93,22 @@
   systemd.services.systemd-networkd.stopIfChanged = false;
 
   # UEFI only, and the firmware reaches the bootloader through the removable
-  # fallback path rather than an NVRAM entry — see ./disko.nix, which mounts the
-  # ESP at `/boot` for systemd-boot's sake.
+  # fallback path; ./disko.nix mounts the ESP at `/boot` for systemd-boot.
   boot.loader = {
     systemd-boot = {
       enable = true;
 
-      # systemd-boot cannot read the kernel out of `/nix/store`, so /boot carries
-      # a kernel and initrd per generation — call it ~100M each. Ten of them fits
-      # the 2G ESP with room to spare; leaving this null would fill the partition
-      # and the next rebuild would fail.
+      # systemd-boot keeps a kernel and initrd per generation, ~100M each; ten
+      # fits the 2G ESP, and leaving this null would fill it.
       configurationLimit = 10;
     };
 
-    # Spelled out because the default has moved between nixpkgs releases and this
-    # one has to agree with the mountpoint in ./disko.nix.
+    # Spelled out because the default has moved between nixpkgs releases.
     efi.efiSysMountPoint = "/boot";
   };
 
-  # The disk is virtio-scsi — `/dev/sda`, `scsi-0QEMU_QEMU_HARDDISK`, sitting on
-  # virtio5 — and neither the transport nor the HBA driver is in the nixpkgs
-  # default initrd set, which is desktop-flavoured (hid_*, atkbd, i8042) and
-  # assumes AHCI or NVMe. Without these, stage-1 cannot mount the root filesystem
-  # and the box drops to an emergency shell with no way in.
+  # The disk is virtio-scsi, and neither that transport nor its HBA driver is in
+  # the default initrd set, so without these stage-1 cannot mount the root fs.
   boot.initrd = {
     availableKernelModules = [
       # keep-sorted start
@@ -144,17 +128,8 @@
     ];
   };
 
-  # `panic=1` reboots instead of hanging: `panic=0`, the default, waits for
-  # somebody to press a key, and on this box there is nobody to press it.
-  #
-  # The rest of this is verbatim from the stock image's own command line, which
-  # is known good on this instance: `console=tty1` is what puts a login prompt
-  # on the console Hetzner shows, and `console=ttyS0` last is what makes
-  # systemd's getty generator start `serial-getty@ttyS0` — nothing else here
-  # would pass it, so an install would quietly drop that second prompt.
-  # `consoleblank=0` stops the screen going dark. The stock line carries no baud
-  # rate and this does not add one: guessing would reconfigure a port whose
-  # working rate cannot be checked from here.
+  # `panic=1` reboots instead of waiting for a keypress, and `console=ttyS0` last
+  # is what starts the serial getty; the rest is the stock image's known-good line.
   boot.kernelParams = [
     "consoleblank=0"
     "systemd.show_status=true"
@@ -163,9 +138,8 @@
     "panic=1"
   ];
 
-  # Both are modules in the kernel this host builds (`CONFIG_TCP_CONG_BBR=m`,
-  # `CONFIG_NET_SCH_FQ=m`) and the sysctls below name things it cannot resolve
-  # until they are loaded — the assignment fails silently without these.
+  # Both are modules here, and the sysctls below name things the kernel cannot
+  # resolve until they are loaded — the assignment fails silently without these.
   boot.kernelModules = [
     # keep-sorted start
     "sch_fq"
@@ -174,9 +148,8 @@
   ];
 
   boot.kernel.sysctl = {
-    # This kernel defaults to cubic (`CONFIG_DEFAULT_TCP_CONG="cubic"`); BBR
-    # holds up better once a path loses packets, which is every path this box
-    # serves over.
+    # This kernel defaults to cubic; BBR holds up better when a path loses
+    # packets, which is every path this box serves over.
     "net.ipv4.tcp_congestion_control" = "bbr";
 
     # The qdisc BBR is meant to be paired with. `cake` shapes a link you own end
@@ -184,29 +157,22 @@
     "net.core.default_qdisc" = "fq";
   };
 
-  # Compaction otherwise runs synchronously inside the allocation that ran out
-  # of contiguous pages. `enabled` is left at the kernel default on purpose —
-  # `always` inflates RSS, which is a poor trade on a small VPS.
+  # Compaction otherwise runs synchronously inside the allocation that ran out of
+  # contiguous pages; `always` inflates RSS, a poor trade on a small VPS.
   boot.kernel.sysfs.kernel.mm.transparent_hugepage.defrag = "defer";
 
   # Hetzner's out-of-band console and password reset ride on the guest agent. On
   # a box with no other way in, that is the safety net.
   services.qemuGuest.enable = true;
 
-  # No shared module enables sshd; on a VPS it is the only way in. The host key
-  # has to exist before sops can derive this host's age recipient, which is why
-  # `../../.sops.yaml` lists wall-e.
+  # No shared module enables sshd, and on a VPS it is the only way in; the host
+  # key must exist before sops can derive this host's age recipient.
   services.openssh = {
     enable = true;
     generateHostKeys = true;
 
-    # `modules/shared/users.nix` already installs `keys/authorized_keys`, so
-    # these remove password paths rather than close anything that was open.
-    # Note this also ends `root@wall-e` logins; the account is `eek`.
-    #
-    # No algorithm allowlists: they need keeping current as clients move, and a
-    # peer that falls outside one is locked out of a box whose only other door
-    # is the console.
+    # `keys/authorized_keys` is already installed, so these close password paths
+    # (root logins included); no algorithm allowlists, which lock out new clients.
     settings = {
       PermitRootLogin = "no";
       PasswordAuthentication = false;
@@ -217,22 +183,15 @@
       ClientAliveInterval = 60;
       ClientAliveCountMax = 5;
 
-      # Caps concurrent *unauthenticated* connections per source address, which
-      # is the DHEat DoS. 1 was too tight: a `nixos-rebuild --target-host` from
-      # a machine that also held an interactive session here was refused. The
-      # client reported a key rejection rather than the dropped connection this
-      # cap is supposed to cause, so the mechanism is unconfirmed — but a second
-      # slot costs nothing and the cap still stops parallel guessing.
+      # Caps unauthenticated connections per source (the DHEat DoS). 1 refused a
+      # `--target-host` rebuild; the mechanism is unconfirmed, and 2 costs little.
       PerSourceMaxStartups = 2;
       PerSourceNetBlockSize = "32:128";
     };
   };
 
-  # The only port on the public internet, and nothing else here watches it.
-  # `ignoreIP` stays at its default — loopback only — so a ban you inflict on
-  # yourself is a console login away from being undone rather than state
-  # surgery. `maxretry` is low because key authentication does not fail by
-  # accident: anything that misses five times is not you.
+  # The only port on the public internet. `ignoreIP` stays loopback-only, so a
+  # self-inflicted ban is a console login away; key auth does not fail by accident.
   services.fail2ban = {
     enable = true;
     maxretry = 5;

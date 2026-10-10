@@ -16,9 +16,8 @@ let
   };
   vaultwarden = config.toua.services.vaultwarden;
 
-  # Every provisioned person joins the Vaultwarden SSO group, but that group is
-  # only created when vaultwarden is enabled, so membership is gated with it
-  # rather than referencing a group that does not exist.
+  # The Vaultwarden SSO group only exists when vaultwarden is enabled, so
+  # membership is gated with it rather than naming a group that does not exist.
   vaultwardenGroups = lib.optional vaultwarden.enable "vaultwarden.access";
 
   # `cfg.domain` is set by the option below, which is what this certificate is
@@ -71,9 +70,8 @@ in
         };
 
         systemd.services.kanidm = {
-          # The unit bind-mounts the TLS files into its mount namespace, so they must
-          # exist before it starts: without this ordering kanidm races acme on first
-          # boot and dies with 226/NAMESPACE.
+          # The unit bind-mounts the TLS files, so they must exist before it
+          # starts: without this ordering kanidm races acme and dies 226/NAMESPACE.
           after = [ "acme-${cfg.domain}.service" ];
           wants = [ "acme-${cfg.domain}.service" ];
 
@@ -82,9 +80,8 @@ in
         };
 
         services.kanidm = {
-          # The stock package cannot read passwords out of files. This variant is
-          # what lets `provision` take them from sops rather than holding them in
-          # the Nix store.
+          # The stock package cannot read passwords out of files; this variant is
+          # what lets `provision` take them from sops instead of the store.
           package = pkgs.kanidmWithSecretProvisioning_1_11;
 
           client = {
@@ -148,17 +145,14 @@ in
           };
         };
 
-        # `useACMEHost` rather than `enableACME`: nginx then references the
-        # certificate above instead of creating one of its own, which is what keeps
-        # the Cloudflare DNS provider in place.
+        # `useACMEHost`, not `enableACME`: nginx references the certificate above
+        # rather than creating its own, which keeps the DNS provider in place.
         services.nginx.virtualHosts.${cfg.domain} = {
           useACMEHost = cfg.domain;
           forceSSL = true;
 
-          # Kanidm serves HTTPS itself, so the upstream scheme is https. nginx does
-          # not verify upstream certificates by default, which is what makes this
-          # work despite the name on kanidm's certificate being sso.<domain> rather
-          # than the 127.0.0.1 it is reached on.
+          # Kanidm serves HTTPS itself; nginx does not verify upstreams by
+          # default, which is what makes this work despite the certificate's name.
           locations."/".proxyPass = "https://${config.services.kanidm.server.settings.bindaddress}";
         };
       })

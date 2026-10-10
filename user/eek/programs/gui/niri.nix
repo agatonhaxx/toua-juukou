@@ -8,9 +8,8 @@ let
   niriEnabled = pkgs.stdenv.hostPlatform.isLinux && config.wayland.windowManager.niri.enable;
 in
 {
-  # Everything below is Wayland/Linux-only. It has to be gated on the same flag
-  # as the session itself, or a Darwin host pulls in packages that do not exist
-  # there — `niri`, `swaybg`, `gamescope` and friends.
+  # Wayland/Linux-only, gated on the same flag as the session: otherwise a Darwin
+  # host pulls in `niri`, `swaybg`, `gamescope` and friends.
   home.packages = lib.mkIf niriEnabled (
     with pkgs;
     [
@@ -260,9 +259,8 @@ in
       invisible
     '';
 
-    # Pull every window off the other monitors onto the focused one. Bound to
-    # Mod+Alt+G in config.kdl; see the comment there for why this cannot be
-    # automatic.
+    # Pull every window off the other monitors onto the focused one, bound to
+    # Mod+Alt+G; nothing can detect the TV going to standby, so it is a keypress.
     "niri/gather-windows.sh" = {
       text = ''
         #!/bin/sh
@@ -271,9 +269,8 @@ in
         ws=$(niri msg --json workspaces)
         here=$(printf '%s' "$ws" | jq -r '.[] | select(.is_focused) | .output')
 
-        # Every monitor always keeps one empty workspace at the bottom, so the
-        # highest index is that one. Gathering there lands everything on a
-        # fresh desktop instead of on top of what is already on screen.
+        # Every monitor keeps one empty workspace at the bottom, so the highest
+        # index is that one; gathering there lands everything on a fresh desktop.
         target=$(printf '%s' "$ws" | jq -r --arg o "$here" '[.[] | select(.output == $o) | .idx] | max')
         elsewhere=$(printf '%s' "$ws" | jq -c --arg o "$here" '[.[] | select(.output != $o) | .id]')
 
@@ -307,8 +304,7 @@ in
       }
 
       // Monitors are kanshi's job, not this file's — see services.kanshi in
-      // ./kanshi.nix. The `output` blocks that used to be here named bender's
-      // connectors on every host, so baymax was left unconfigured.
+      // ./kanshi.nix.
 
       gestures {
         hot-corners {
@@ -317,10 +313,8 @@ in
       }
       // Spawn essential services at startup
       spawn-at-startup "waybar"
-      // Pick a random wallpaper on each login from the collection checked out
-      // under ~/dev/eek/wallpapers, skipping .git so swaybg is never handed a
-      // file out of it. The collection is meant to become a flake input, so
-      // that no host needs the checkout.
+      // A random wallpaper per login from ~/dev/eek/wallpapers, skipping .git so
+      // swaybg is never handed a file out of it; meant to become a flake input.
       spawn-sh-at-startup "swaybg -i \"$(find ${config.home.homeDirectory}/dev/eek/wallpapers -type f -not -path '*/.git/*' | shuf -n1)\""
       spawn-at-startup "fcitx5"
       // Idle management: dim after 15 min, lock (GDM) after 30 min
@@ -371,9 +365,7 @@ in
 
           // ── Workspaces (2 per monitor) ───────────────
           // Indices are per output, so 1 and 2 are the same two desktops on
-          // whichever monitor holds the focus. There is no 3 or 4: niri's
-          // workspaces are dynamic, and a third only exists once something
-          // has been pushed past the second.
+          // whichever monitor holds the focus; there is no 3 or 4.
           Mod+1 { focus-workspace 1; }
           Mod+2 { focus-workspace 2; }
 
@@ -381,22 +373,18 @@ in
           Mod+Shift+2 { move-window-to-workspace 2; }
 
           // ── Monitors ─────────────────────────────────
-          // A second, coarser axis: niri keeps a separate workspace list per
-          // output, so J/K run out of desktops at the end of a monitor, and
+          // A second axis: J/K run out of desktops at the end of a monitor, so
           // Alt is what steps between the monitors themselves.
           Mod+Alt+H { focus-monitor-right; }
           Mod+Alt+L { focus-monitor-left; }
 
-          // Sending a thing across, rather than looking across: the column
-          // travels, matching Mod+Shift+H/L above, with Ctrl added to make
-          // room for the monitor directions on the same two keys.
+          // Sending a thing across rather than looking across: the column
+          // travels, matching Mod+Shift+H/L with Ctrl added for these keys.
           Mod+Ctrl+Alt+H { move-column-to-monitor-right; }
           Mod+Ctrl+Alt+L { move-column-to-monitor-left; }
 
           // Nothing can watch for the TV dropping into standby: it holds the
-          // HDMI link up, so the kernel and niri both still call the output
-          // connected and its windows stay where they are. Gathering them
-          // back onto the focused monitor is a keypress for that reason.
+          // HDMI link up, so the output still reads as connected.
           Mod+Alt+G { spawn "${config.xdg.configHome}/niri/gather-windows.sh"; }
 
           // ── Layout ───────────────────────────────────

@@ -10,10 +10,8 @@ let
   cfg = config.toua.homebrew;
 in
 {
-  # What macOS installs through Homebrew: the installation itself below, and one
-  # module per program that contributes a cask, a tap or an icon. They live here
-  # rather than under modules/programs because they set Homebrew and login-item
-  # options that only nix-darwin has.
+  # One module per program contributing a cask, tap or icon; they set Homebrew
+  # and login-item options that only nix-darwin has.
   imports = importDir { dir = ./.; };
 
   config = lib.mkIf cfg.enable {

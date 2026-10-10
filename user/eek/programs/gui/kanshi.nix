@@ -10,25 +10,8 @@ let
   niriEnabled = pkgs.stdenv.hostPlatform.isLinux && config.wayland.windowManager.niri.enable;
 in
 {
-  # kanshi is niri's own answer to output configuration (niri's FAQ points at
-  # it, and niri implements the `zwlr_output_manager_v1` protocol it speaks).
-  #
-  # It activates the profile whose outputs are all *connected* and which
-  # matches the most of them, so the profiles below are the detection: the
-  # ultrawide-and-TV pair on baymax, the laptop-and-TV pair on bender, and the
-  # single-monitor fallback for each. Because a profile for the other machine
-  # names outputs that are not connected, it never activates — one shared
-  # config covers both hosts.
-  #
-  # This replaces the static `output` blocks that used to sit in
-  # niri/config.kdl. Those named bender's connectors on every host, so baymax
-  # (DP-3 + HDMI-A-1) was never actually configured by nix.
-  #
-  # baymax's criteria are the "manufacturer model serial" strings reported by
-  # `niri msg outputs`, globbed so they survive a serial going missing. They
-  # are stable across reboots and re-cabling, unlike connector names, which the
-  # kernel is free to renumber. bender's two outputs keep their connector names
-  # because that is all the old static blocks recorded.
+  # niri's output configuration: kanshi activates only the profile whose outputs
+  # are connected, so this one config covers every host; names come from niri.
   services.kanshi = lib.mkIf niriEnabled {
     enable = true;
 
@@ -44,10 +27,8 @@ in
               scale = 1.0;
             }
             {
-              # Samsung 4K TV, right. Scale 1.5 puts it at 2560x1440 logical,
-              # which is what its size and viewing distance want. The mode is
-              # spelled out because the TV prefers 3840x2160@30 and will pick
-              # it on its own; @60 is in its EDID.
+              # Samsung 4K TV, right, at 1.5 scale (2560x1440 logical). The mode
+              # is spelled out because the TV prefers 3840x2160@30 on its own.
               criteria = "Samsung Electric Company SAMSUNG *";
               mode = "3840x2160@60Hz";
               position = "3440,0";

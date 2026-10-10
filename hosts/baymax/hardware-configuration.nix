@@ -71,30 +71,24 @@
     options = [ "noatime" ];
   };
 
-  # Nested inside the xfs volume above. systemd orders a nested mount after its
-  # parent on its own, so ordering is not what this entry has to get right.
-  #
-  # There is deliberately no `subvol=` here: `btrfs subvolume list` on this
-  # filesystem is empty — autobrr, sonarr, qbittorrent and the rest all live in
-  # the top-level tree, and the default subvolume is FS_TREE. The `subvol=qt`
-  # this entry used to carry (taken from the volume's *label*) named nothing,
-  # so mount failed with `fsconfig() failed: No such file or directory` and
-  # local-fs.target dropped the machine into an emergency shell every time.
-  #
-  # `nofail` so a media volume can never do that again.
+  # Nested inside the xfs volume above; no `subvol=`, because the filesystem has
+  # none and the old label-derived `subvol=qt` broke mount — hence `nofail`.
   fileSystems."/data/baymax/qt" = {
     device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_500GB_S466NX0K927369W-part1";
     fsType = "btrfs";
-    options = [ "compress=zstd" "noatime" "nofail" ];
+    options = [
+      "compress=zstd"
+      "noatime"
+      "nofail"
+    ];
   };
 
-  # Nothing created this file but the installer once did: nixpkgs generates the
-  # unit that makes a swap device only for entries carrying a `size` (or using
-  # random encryption), so this pointed at a file that was not there. `/var` is
-  # on btrfs, and a size routes creation through `btrfs filesystem mkswapfile`,
-  # which also sets nocow and turns compression off for the file, as a btrfs
-  # swapfile requires. 16 GiB for 31 GiB of RAM, headroom rather than a resume
-  # target: no hibernation is configured, and a btrfs swapfile would need a
-  # `resume_offset` for that anyway.
-  swapDevices = [ { device = "/var/swapfile"; size = 16384; } ];
+  # Without `size` nixpkgs generates no unit that creates the file, so this once
+  # pointed at a missing swapfile; a size routes creation through btrfs mkswapfile.
+  swapDevices = [
+    {
+      device = "/var/swapfile";
+      size = 16384;
+    }
+  ];
 }

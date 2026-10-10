@@ -5,9 +5,8 @@ let
   groups = import ../groups.nix;
 in
 {
-  # macOS-only options, declared here for the same reason the NixOS-only ones
-  # live under `modules/nixos/`: they do not exist on other platforms, so a
-  # host cannot set them and be silently ignored.
+  # macOS-only, declared here for the same reason the NixOS-only options live
+  # under `modules/nixos/`: off-platform they do not exist.
   options.toua.homebrew.enable = mkEnableOption "Manage Homebrew with nix-homebrew";
   options.toua.programs = mkEnableOptions (builtins.attrNames groups.mac.programs);
 }

@@ -37,9 +37,8 @@ in
         ];
       }
       (lib.mkIf (web.dependenciesEnabled && kanidm.enable) {
-        # `ADMIN_TOKEN` lives here rather than in `config` below, which is written
-        # into the world-readable Nix store. Password signups remain closed; new
-        # identities instead come from Kanidm's Vaultwarden access group.
+        # `ADMIN_TOKEN` lives here, not in `config` below, which is written into
+        # the world-readable store; signups stay closed, Kanidm invites instead.
         sops = {
           secrets = {
             vaultwarden-env = mkSecret {
@@ -88,10 +87,8 @@ in
             INVITATIONS_ALLOWED = true;
             SHOW_PASSWORD_HINT = false;
 
-            # Keep password login available until SSO has been exercised from all
-            # clients. SSO users still have to know their Vaultwarden master
-            # password; Kanidm replaces account authentication, not vault
-            # encryption.
+            # Password login stays available until SSO has been exercised from
+            # every client; Kanidm replaces account auth, not vault encryption.
             SSO_ENABLED = true;
             SSO_ONLY = false;
             SSO_SIGNUPS_ALLOWED = true;

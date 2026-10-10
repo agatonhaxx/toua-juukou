@@ -136,9 +136,8 @@ let
 in
 {
   options.toua.services.borgbackup = {
-    # Deliberately not `mkServiceOption`: borg has no address or port of its
-    # own. Every connection is an ssh one, and which end of it a host is on
-    # follows from whether it sets jobs or repos.
+    # Not `mkServiceOption`: borg has no address or port of its own, and every
+    # connection is an ssh one.
     enable = lib.mkEnableOption "the borgbackup service";
 
     jobs = lib.mkOption {
@@ -156,10 +155,7 @@ in
     mirrors = lib.mkOption {
       type = lib.types.attrsOf mirrorType;
       default = { };
-      description = ''
-        Standalone repository mirrors copied with rsync while Borg holds the
-        source repository lock. A mirror must never be written to independently.
-      '';
+      description = "Copied with rsync while Borg holds the source lock; never written to independently.";
     };
 
     secretDirectory = lib.mkOption {
@@ -215,8 +211,7 @@ in
           BORG_RSH = "ssh -i ${config.sops.secrets.borg-sshkey.path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/var/lib/borgbackup-client/known_hosts";
 
           # A repository reached through a forced `borg serve` reports a location
-          # that does not match the one the client recorded, which otherwise stops
-          # the job on a prompt nobody is there to answer.
+          # the client did not record, which stops the job on an unanswerable prompt.
           BORG_RELOCATED_REPO_ACCESS_IS_OK = "yes";
         };
 

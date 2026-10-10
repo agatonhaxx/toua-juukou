@@ -18,11 +18,11 @@ let
 in
 {
   xdg.configFile = lib.mkIf enabled {
-    # Ctrl+Alt is the macOS equivalent of niri's Mod key. Declaring bindings in
-    # init.lua makes the shortcut set declarative; KiwiDesk will show the file
-    # in its Settings editor instead of maintaining a separate gui.json keymap.
-    # Do not adopt into the visual editor: it replaces init.lua with a
-    # commented backup and cannot preserve these Lua closures and helpers.
+    # Ctrl+Alt mirrors niri's Mod; declaring bindings in init.lua keeps the
+    # shortcut set declarative and visible in KiwiDesk's own Settings editor.
+
+    # Do not adopt into the visual editor: it replaces init.lua with a commented
+    # backup and cannot preserve these Lua closures and helpers.
     "KiwiDesk/init.lua".text = ''
       local mod = "ctrl+alt+"
       local move = "ctrl+alt+shift+"

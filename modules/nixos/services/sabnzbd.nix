@@ -13,33 +13,31 @@ let
   stateDir = config.services.sabnzbd.stateDir;
 in
 {
-  options.toua.services.sabnzbd = mkServiceOption "sabnzbd" {
-    # Upstream defaults to 8080, which the qBittorrent WebUI already holds.
-    port = 8081;
-    host = "0.0.0.0";
-  }
-  // {
-    dataDir = lib.mkOption {
-      type = lib.types.path;
-      default = "/var/lib/sabnzbd";
-      description = "Directory holding `sabnzbd.ini`.";
-    };
+  options.toua.services.sabnzbd =
+    mkServiceOption "sabnzbd" {
+      # Upstream defaults to 8080, which the qBittorrent WebUI already holds.
+      port = 8081;
+      host = "0.0.0.0";
+    }
+    // {
+      dataDir = lib.mkOption {
+        type = lib.types.path;
+        default = "/var/lib/sabnzbd";
+        description = "Directory holding `sabnzbd.ini`.";
+      };
 
-    incompleteDir = lib.mkOption {
-      type = lib.types.path;
-      default = "${cfg.dataDir}/incomplete";
-      description = "Where sabnzbd assembles downloads (`misc.download_dir`).";
-    };
+      incompleteDir = lib.mkOption {
+        type = lib.types.path;
+        default = "${cfg.dataDir}/incomplete";
+        description = "Where sabnzbd assembles downloads (`misc.download_dir`).";
+      };
 
-    completeDir = lib.mkOption {
-      type = lib.types.path;
-      default = "${cfg.dataDir}/complete";
-      description = ''
-        Where finished downloads are moved (`misc.complete_dir`). The category
-        directories below it are the WebUI's to arrange.
-      '';
+      completeDir = lib.mkOption {
+        type = lib.types.path;
+        default = "${cfg.dataDir}/complete";
+        description = "Where finished downloads are moved (`misc.complete_dir`).";
+      };
     };
-  };
 
   config = lib.mkIf cfg.enable {
     services.sabnzbd = {
@@ -53,22 +51,17 @@ in
         complete_dir = cfg.completeDir;
       };
 
-      # sabnzbd generates the ini itself, so the WebUI keeps its indexers, news
-      # servers and API key there, and the settings above are merged over
-      # whatever it holds at every start. Left off, the module writes the ini
-      # read-only and the WebUI's saves would be lost.
+      # The WebUI keeps its indexers, news servers and API key in the ini it
+      # generates; left off, the module writes it read-only and those saves go.
       allowConfigWrite = true;
     };
 
     # The unit works from `/var/lib/<stateDir>` with no option to move it, so the
-    # data directory is bound over it. StateDirectory is created before the
-    # namespace is entered and the bind target follows the unit's writable paths.
+    # data directory is bound over it.
     systemd.services.sabnzbd.serviceConfig.BindPaths = [ "${cfg.dataDir}:/var/lib/${stateDir}" ];
 
-    # The upstream module creates nothing itself. The ini directory is
-    # sabnzbd's own; the download directories belong to the host's shared
-    # download tree, so they are group-owned and setgid, which is also what
-    # keeps the group on what sabnzbd writes into them.
+    # The module creates nothing itself: the ini directory is sabnzbd's own, and
+    # the download directories are group-owned setgid like the shared tree.
     systemd.tmpfiles.settings."10-sabnzbd" = {
       "${cfg.dataDir}"."d" = {
         user = "sabnzbd";

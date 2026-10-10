@@ -1,12 +1,6 @@
 {
-  # The GNOME desktop, GDM, the niri session registration and the shared
-  # session plumbing (X11, PipeWire) are not configured here — they follow
-  # `toua.desktop.*` / `toua.displayManager.*` in `modules/nixos/desktop.nix`,
-  # and bender turns them on by setting its profile to "desktop".
-  #
-  # What is left is what is specific to this machine: its lid, its Bluetooth
-  # radio, and the SSH daemon that supplies the host key sops derives its age
-  # identity from.
+  # The desktop, GDM, niri and session plumbing follow `toua.desktop.*`; here is
+  # what is specific: this machine's lid, radio, and sshd's key for sops.
   services = {
     # Keep running when lid is closed (laptop docked to TV)
     logind = {

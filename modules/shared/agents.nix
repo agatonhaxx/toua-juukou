@@ -7,9 +7,8 @@
 let
   user = config.toua.primaryUser;
 
-  # NixOS defaults a normal user's `home` to `/home/<name>`, but nix-darwin
-  # leaves it null unless the host spells it out, so fall back to the macOS
-  # convention there. The rendered path has to be absolute at evaluation time.
+  # nix-darwin leaves `home` null unless the host spells it out, so fall back to
+  # the platform convention; the rendered path must be absolute at eval time.
   userHome =
     let
       configured = config.users.users.${user}.home;
@@ -20,14 +19,8 @@ let
       configured;
 in
 {
-  # DeepSeek serves an Anthropic-compatible API, so pointing Claude Code at it
-  # is a matter of environment variables. They are rendered into a file rather
-  # than exported from the shell profile because the auth token is a secret:
-  # `sops.templates` is the only mechanism here that substitutes a placeholder,
-  # and the rendered copy is written 0400 to the user's home, never the store.
-  #
-  # Declared at system scope because that is the only sops scope this flake
-  # has — home-manager reaches the result through the same rendered file.
+  # The token is a secret, so it is rendered through `sops.templates` into a 0400
+  # file in the user's home — the only sops scope this flake has.
   config = lib.mkIf config.toua.programs.claude-code.enable {
     sops.secrets.deepseek-api-key = {
       sopsFile = ../../secrets/eek.yaml;

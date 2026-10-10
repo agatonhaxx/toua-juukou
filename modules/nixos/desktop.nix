@@ -28,9 +28,8 @@ in
     (lib.mkIf cfg.desktop.gnome.enable {
       services.desktopManager.gnome.enable = true;
 
-      # Catppuccin for GNOME — icon + cursor themes applied to the GDM dconf
-      # profile. catppuccin/nix has no libadwaita/GNOME Shell theming module;
-      # these two ports are the full extent of its GNOME integration.
+      # catppuccin/nix has no GNOME Shell or libadwaita module, so these two
+      # ports are the full extent of its GNOME integration.
       catppuccin = {
         flavor = "mocha";
         accent = "mauve";
@@ -42,9 +41,8 @@ in
       programs.niri.enable = true;
     })
 
-    # Session plumbing shared by any graphical session: X11 for XWayland and
-    # X-only apps, and PipeWire for audio. PulseAudio is disabled because
-    # PipeWire provides its interface.
+    # Shared by any graphical session: X11 for XWayland and X-only apps, and
+    # PipeWire, whose pulse interface replaces pulseaudio.
     (lib.mkIf graphical {
       services = {
         xserver = {

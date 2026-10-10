@@ -6,11 +6,8 @@
 let
   groups = import ../../modules/groups.nix;
   inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
-  # The machine name and the work identity must never sit next to each other in
-  # this public repository, so both live encrypted in `secrets/eek.yaml` and are
-  # rendered at activation. The repository only holds the key names. sops-nix
-  # only ever exposes a secret as a file on disk, which is what keeps the value
-  # out of the Nix store.
+  # The machine name and the work identity are encrypted in `secrets/eek.yaml` —
+  # this repo is public — and sops-nix renders them as files, never into the store.
   secretsFile = ../../secrets/eek.yaml;
 in
 {
@@ -18,13 +15,8 @@ in
     ../../user
   ];
 
-  # macOS's `path_helper` rewrites $PATH at every login and puts Apple's
-  # binaries ahead of the Nix ones. `user/shells/fish.nix` re-prepends the Nix
-  # directories in `loginShellInit` to undo that — the block it does it in is
-  # generic, because fish never reads /etc/profile and so needs the same
-  # prepend for a working PATH on NixOS. The macOS reason is written down here,
-  # on the host it applies to.
-  # https://github.com/LnL7/nix-darwin/issues/122
+  # macOS's `path_helper` puts Apple's binaries ahead of the Nix ones at every
+  # login, so `user/shells/fish.nix` re-prepends them (nix-darwin#122).
 
   toua = lib.mkMerge [
     (mkDefaults groups.agents)
@@ -48,10 +40,8 @@ in
     knownUsers = [ "Glenn.Dahl" ];
   };
 
-  # nix-darwin writes the hostname itself whenever these are set, and easy-hosts
-  # would otherwise default `hostName` to the flake host name `mac`. Both are
-  # suppressed: the activation script below is the only writer and takes the
-  # name from a secret.
+  # Suppressed because the activation script below is the only writer: nix-darwin
+  # writes the hostname itself, and easy-hosts would default it to the flake name.
   networking = {
     computerName = null;
     hostName = null;
@@ -69,10 +59,8 @@ in
     };
   };
 
-  # `mkOrder 1600` sorts this after sops-nix's own contribution to the same
-  # option (it uses `mkAfter`, priority 1500), so the secret is on disk by the
-  # time this runs. Without the ordering the name would only appear from the
-  # second activation onwards.
+  # `mkOrder 1600` lands this after sops-nix's own `mkAfter` (1500), so the secret
+  # is on disk; without it the name only appears from the second activation on.
   system.activationScripts.postActivation.text = lib.mkOrder 1600 ''
     hostname_file=${lib.escapeShellArg config.sops.secrets.mac-hostname.path}
     if [ -r "$hostname_file" ]; then

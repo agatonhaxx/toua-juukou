@@ -53,9 +53,7 @@ in
     # configuration tools out of headless Linux hosts.
     (mkIf (pkgs.stdenv.hostPlatform.isLinux && config.toua.graphical.enable) {
       catppuccin = {
-        # Qt apps need the Home Manager Qt module with qtct as platform theme.
-        # Kvantum is opted out because it conflicts with qt5ct (it requires
-        # `qt.style.name = "kvantum"`).
+        # Kvantum conflicts with qt5ct: it requires `qt.style.name = "kvantum"`.
         qt5ct.enable = true;
         kvantum.enable = false;
       };

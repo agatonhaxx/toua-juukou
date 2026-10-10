@@ -25,10 +25,7 @@ in
       dataDir = lib.mkOption {
         type = lib.types.path;
         default = "/var/lib/slskd";
-        description = ''
-          slskd's application directory: the database, the logs, and by default
-          the download directories below.
-        '';
+        description = "slskd's application directory: the database and the logs.";
       };
 
       downloadsDir = lib.mkOption {
@@ -51,19 +48,8 @@ in
     };
 
   config = lib.mkIf cfg.enable {
-    # slskd cannot create its own Soulseek account, so the credentials and the
-    # WebUI login come from the environment file. That file holds one key, `env`,
-    # whose value is the dotenv block — the same shape as `vaultwarden-env`:
-    #
-    #   env: |
-    #     SLSKD_SLSK_USERNAME=<soulseek username>
-    #     SLSKD_SLSK_PASSWORD=<soulseek password>
-    #     SLSKD_USERNAME=<webui username>
-    #     SLSKD_PASSWORD=<webui password>
-    #
-    # The generated `slskd.yml` lives in the store, so the environment is the
-    # only place these can be kept out of it. Create the file with
-    # `just secret secrets/services/slskd.yaml` before enabling the service.
+    # slskd cannot create its own account and its generated `slskd.yml` is in
+    # the store, so the credentials live in `secrets/services/slskd.yaml`.
     sops.secrets.slskd-env = mkSecret {
       file = "slskd";
       key = "env";
@@ -94,14 +80,8 @@ in
     # WebUI, which is reached on the LAN like the other media services.
     networking.firewall.allowedTCPPorts = [ cfg.port ];
 
-    # The unit is started with `--app-dir /var/lib/slskd` and its StateDirectory
-    # is the same, neither an option, so the data directory is bound over it.
-    # StateDirectory is created before the namespace is entered and the bind
-    # target follows the unit's writable paths.
-    #
-    # Upstream derives `ReadOnlyPaths` from the share paths with
-    # `builtins.elemAt (builtins.split …) 1`, which returns a list per path and
-    # cannot be rendered into a unit file, so the paths are passed through.
+    # The app directory is not an option, so data is bound over it; the force is
+    # because upstream derives `ReadOnlyPaths` in a way systemd cannot render.
     systemd.services.slskd.serviceConfig = {
       BindPaths = [ "${cfg.dataDir}:/var/lib/slskd" ];
       ReadOnlyPaths = lib.mkForce cfg.shares;
@@ -111,9 +91,8 @@ in
       UMask = "002";
     };
 
-    # The database and the downloads share this directory, so it is group-owned
-    # rather than private: the host's media group reads downloads below it, and
-    # the unit needs the download directories to exist for its `ReadWritePaths`.
+    # The database and the downloads share this directory, so it is group-owned:
+    # the media group reads downloads below it and the unit needs them to exist.
     systemd.tmpfiles.settings."10-slskd" =
       lib.genAttrs
         [

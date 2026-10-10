@@ -13,17 +13,15 @@ let
   home = config.home.homeDirectory;
   xdgCfg = config.xdg;
 
-  # Graphical settings are selected explicitly by profiles and can be overridden
-  # by the host or user independently of individual application selections.
-  # User directories and the X11 and Wine variables below are Linux-specific.
+  # Gates the user directories and the X11/Wine variables below, which are
+  # Linux-specific; the host or user can still override it independently.
   desktop = isLinux && toua.graphical.enable;
 in
 {
   home.preferXdgDirectories = true;
 
-  # `xdg.cacheHome`, `configHome`, `dataHome` and `stateHome` were set
-  # explicitly in the original but are already home-manager's defaults, so they
-  # are left alone here rather than restated.
+  # Left at home-manager's defaults (`~/.cache`, `~/.config`, …) rather than
+  # restated.
   xdg = {
     userDirs = {
       enable = desktop;
@@ -49,9 +47,8 @@ in
     mime.enable = desktop;
   };
 
-  # Keeps the many tools that ignore XDG on their own out of `$HOME`. The list
-  # is the one from xdg-ninja; entries in `user/eek/system/env.nix` that overlap are
-  # commented out there.
+  # Keeps tools that ignore XDG on their own out of `$HOME`. The list is
+  # xdg-ninja's; overlaps in `user/eek/system/env.nix` are commented out there.
   home.sessionVariables = {
     # Desktop
     KDEHOME = "${xdgCfg.configHome}/kde";
@@ -91,9 +88,8 @@ in
   };
 
   xdg.configFile = {
-    # Interpolated rather than escaped. The original wrote these as literal
-    # `${cfg.dataHome}` text, which npm would have looked for as an environment
-    # variable of that name; the paths are resolved here instead.
+    # Interpolated, not escaped: written literally, npm would look for an
+    # environment variable of that name instead of the path.
     "npm/npmrc".text = ''
       prefix=${xdgCfg.dataHome}/npm
       cache=${xdgCfg.cacheHome}/npm

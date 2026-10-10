@@ -8,11 +8,8 @@
   programs.fish = {
     enable = lib.mkDefault config.toua.programs.fish.enable;
 
-    # Fish reads no /etc/profile, so this is the only thing that puts the
-    # system profile directories on its PATH. It prepends them rather than
-    # appending, so the Nix binaries win over anything a login script puts in
-    # front later — on macOS that is `path_helper`, which hosts/mac/default.nix
-    # describes.
+    # Fish reads no /etc/profile, so this is the only thing that puts the system
+    # profile dirs on PATH; prepending them lets Nix win over `path_helper`.
     loginShellInit =
       let
         # On NixOS, privileged commands such as sudo must resolve through the

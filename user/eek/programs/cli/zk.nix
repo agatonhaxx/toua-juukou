@@ -5,9 +5,8 @@
 }:
 {
   programs.zk = lib.mkIf config.programs.zk.enable {
-    # `zk` finds its notebook through the config file, so this only matters for
-    # editor plugins launched outside a notebook directory. Deriving the variable
-    # from `notebook.dir` above keeps the path written down in exactly one place.
+    # Only matters for editor plugins launched outside a notebook directory;
+    # deriving it from `notebook.dir` keeps the path in one place.
     exportNotebookDir = true;
 
     settings = {

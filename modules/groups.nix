@@ -53,8 +53,8 @@
     graphical.enable = true;
     fonts.enable = true;
     programs = {
-      # blueman and bluetooth are declared but left off: whether a machine has a
-      # radio is a hardware fact, so a host opts in rather than the group.
+      # Left off: whether a machine has a radio is a hardware fact, so a host
+      # opts in rather than the group.
       # keep-sorted start
       blueman.enable = false;
       bluetooth.enable = false;

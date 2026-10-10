@@ -118,12 +118,10 @@
         version_format = "v\${raw}";
       };
 
-      # Kubernetes context, right-aligned on the prompt's first line: it is
-      # placed after `$fill` in `format`, which is what pushes it to the edge.
-      #
-      # This module ships disabled. It keys off $KUBECONFIG or ~/.kube/config
-      # rather than the kubectl binary, so it appears whenever a current
-      # context exists and stays silent otherwise -- no explicit guard needed.
+      # Right-aligned on the first line: it comes after `$fill` in `format`.
+
+      # Ships disabled; it keys off $KUBECONFIG / ~/.kube/config, not the kubectl
+      # binary, so it needs no explicit guard.
       kubernetes = {
         disabled = false;
         symbol = "☸ ";

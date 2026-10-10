@@ -38,9 +38,8 @@
       '';
 
       functions = {
-        # `zk new` normally treats its positional argument as a directory. For a
-        # nonexistent path, make the convenient `zk new my title` form create a
-        # titled note while preserving the native behavior for real directories.
+        # `zk new` reads its argument as a directory; for words that are not one,
+        # build a title instead — a real directory keeps the native behaviour.
         zk = ''
           if test (count $argv) -ge 2; and test "$argv[1]" = new
             set -l target "$argv[2]"
@@ -89,9 +88,7 @@
           nix run "nixpkgs#$argv[1]" -- $argv[2..-1]
         '';
 
-        # Fetches the token from Bitwarden and runs the command with it in the
-        # environment. Needs an unlocked `bw` session; the item name is a
-        # placeholder.
+        # Needs an unlocked `bw` session; REPLACE-ME is the item name.
         with_gh_token = ''
           set -lx GITHUB_TOKEN (bw get password REPLACE-ME)
           command $argv
@@ -125,9 +122,8 @@
       {
         "fish/completions" = symlink "${./fish/completions}" { recursive = true; };
 
-        # `programs.fish.functions` writes one file per function into this same
-        # directory, so it can only be extended file by file — a directory symlink
-        # here would collide with the functions declared above.
+        # File by file: `programs.fish.functions` writes its own files into this
+        # same directory, so a directory symlink would collide with them.
         "fish/functions/mkpasswd2.fish" = symlink "${./fish/functions/mkpasswd2.fish}" { };
       };
   };

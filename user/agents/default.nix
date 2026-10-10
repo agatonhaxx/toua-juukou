@@ -8,9 +8,8 @@ let
   # programs themselves are installed.
   agentsEnabled = config.programs.codex.enable || config.programs.claude-code.enable;
 
-  # Each supported agent exposes the same prompt-submission event
-  # and the same `systemMessage` output shape, so one handler entry serves them
-  # all. Adding a third agent means adding its wiring below.
+  # Both agents expose the same prompt-submission event and `systemMessage`
+  # output shape, so one handler entry serves them all.
   factHook = [
     {
       hooks = [
@@ -38,23 +37,18 @@ in
     source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/agents/AGENTS.md";
   };
 
-  # The hook runs before every submitted prompt. The script draws its odds with
-  # shuf and exits silently unless it wins, so the usual case costs one process
-  # spawn and contributes nothing to the context. A win prints a
-  # `systemMessage`, which the agent renders to the user in the transcript
-  # without adding it to the model's context.
-  #
-  # Managing settings.json at all takes ~/.claude/settings.json out of the
-  # user's hands, so the theme the hand-written file used to set is carried
-  # over.
+  # Runs before every prompt and usually exits silently; a win prints a
+  # `systemMessage`, which reaches the user, not the model's context.
+
+  # Managing settings.json takes the hand-written ~/.claude/settings.json out of
+  # the user's hands, so the theme it used to set is carried over.
   programs.claude-code.settings = lib.mkIf config.programs.claude-code.enable {
     theme = "auto";
     hooks.UserPromptSubmit = factHook;
   };
 
-  # Codex reads the same structure from CODEX_HOME/hooks.json. Its hooks are on
-  # by default, but it asks the user to trust a hook before running it, so this
-  # one has to be accepted once via Codex's `/hooks`.
+  # Codex reads the same structure from CODEX_HOME/hooks.json, but asks the user
+  # to trust a hook once via `/hooks` before running it.
   programs.codex.hooks = lib.mkIf config.programs.codex.enable {
     UserPromptSubmit = factHook;
   };

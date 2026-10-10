@@ -20,9 +20,8 @@
         Fallback = false;
       };
 
-      # Extensions installed via policy. `force_installed` cannot be removed;
-      # `normal_installed` can be removed but is re-installed on next start.
-      # Both auto-update from addons.mozilla.org, so no hashes to maintain.
+      # `force_installed` cannot be removed, `normal_installed` is re-installed
+      # on next start; both auto-update, so there are no hashes to maintain.
       ExtensionSettings = {
         # uBlock Origin — force-installed, auto-updated by Mozilla
         "uBlock0@raymondhill.net" = {
@@ -133,12 +132,8 @@
           "extensions.autoDisableScopes" = 0;
         };
 
-        # Catppuccin Mocha — Firefox chrome theme
-        # To use a remote source instead, set this to a path:
-        #   userChrome = pkgs.fetchurl {
-        #     url = "https://raw.githubusercontent.com/.../userChrome.css";
-        #     hash = "sha256-...";
-        #   };
+        # Catppuccin Mocha chrome. For a remote source instead, point this at
+        # `pkgs.fetchurl { url = ...; hash = ...; }`.
         userChrome = ''
           /* Catppuccin Mocha — toolbar + sidebar colors */
           :root {

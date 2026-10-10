@@ -12,34 +12,7 @@ let
     types
     ;
 
-  /**
-    Import every `.nix` file in `dir` as a module.
-
-    `default.nix` is always skipped, since the file that does the importing is
-    usually the one sitting beside the others. `exclude` names any further file
-    to skip, such as the `lib.nix` next to this one.
-
-    Directory order is `builtins.readDir` order, so the modules do not need to
-    be listed — and adding a file to the directory is enough to load it.
-
-    # Type
-
-    ```
-    importDir :: { dir :: Path, exclude ? [ String ] } -> [ Path ]
-    ```
-
-    # Example
-
-    ```nix
-    { lib, ... }:
-    let
-      inherit (import ../shared/lib.nix { inherit lib; }) importDir;
-    in
-    {
-      imports = importDir { dir = ./.; };
-    }
-    ```
-  */
+  # Imports every `.nix` file in `dir`, minus `default.nix` and `exclude`.
   importDir =
     {
       dir,
@@ -78,12 +51,8 @@ let
       builtins.attrNames packages
     );
 
-  # Users the host manages, keyed by username. The primary user is always
-  # managed — it is the account the host's integrations assume — so it is
-  # re-added after filtering and forced enabled. `homeModule` falls back to the
-  # repo-wide default, user/eek, for a host that names a primary user without
-  # listing it in `toua.users`; it matches the option default in
-  # modules/shared/options.nix. A second user names their own tree.
+  # The primary user is always managed — forced enabled and re-added after
+  # filtering — because the host's integrations assume that account exists.
   mkManagedUsers =
     toua:
     let
@@ -98,16 +67,7 @@ let
       };
     };
 
-  /**
-    A quick way to create the standard service options under
-    `toua.services.<name>`. Ported from the dotfiles repo.
-
-    # Type
-
-    ```
-    mkServiceOption :: String -> AttrSet -> AttrSet
-    ```
-  */
+  # Declares the standard `toua.services.<name>` options.
   mkServiceOption =
     name:
     {
@@ -137,22 +97,8 @@ let
       };
     };
 
-  /**
-    A Radarr/Sonarr-style arr. The two differ only in their name and their
-    default port, so the module is written once here: an HTTP service with a data
-    directory of its own, which imports from a download tree into a library and
-    therefore needs the `media` group and a group-writable umask.
-
-    What each arr keeps in its database — indexers, download clients, root
-    folders, quality profiles — is the WebUI's, as the service section of
-    README.md describes.
-
-    # Type
-
-    ```
-    mkArr :: { config :: AttrSet, name :: String, port :: Int } -> AttrSet
-    ```
-  */
+  # A Radarr/Sonarr-style arr: HTTP service, data directory, `media` group and
+  # a group-writable umask; its database stays the WebUI's.
   mkArr =
     {
       config,
@@ -177,10 +123,7 @@ let
           dataDir = mkOption {
             type = types.path;
             default = "/var/lib/${name}";
-            description = ''
-              The arr's own directory: its database, its configuration and the API
-              key it generates.
-            '';
+            description = "The arr's own directory: its database, configuration and API key.";
           };
         };
 
@@ -191,41 +134,30 @@ let
           dataDir = cfg.dataDir;
 
           # Exported as `<NAME>__<SECTION>__<KEY>` at every start and merged over
-          # config.xml, the same shape as prowlarr's settings: everything else
-          # the WebUI saves is the arr's.
+          # config.xml; everything else the WebUI saves stays the arr's.
           settings.server = {
             port = cfg.port;
             bindaddress = cfg.host;
           };
         };
 
-        # The module creates the directory itself only while `dataDir` sits at
-        # its default, so a host directory is made here. It holds the database
-        # and the API key, so it stays private; the libraries and the download
-        # tree it imports from are the ones the media group opens.
+        # The module only creates its default `dataDir`, so a host's own directory
+        # is made here — 0700, since it holds the database and the API key.
         systemd.tmpfiles.settings."10-${name}"."${cfg.dataDir}".d = {
           user = name;
           group = name;
           mode = "0700";
         };
 
-        # An import writes beside the download it came from — a hardlink — and
-        # renames it into the library, so both trees need this user in the group
-        # that owns them. The umask is what keeps what it writes group-writable
-        # for the download clients and for the user.
-        #
-        # `mkForce` because the module sets `UMask` itself, and unit settings
-        # merge by equality rather than precedence: two different values are an
-        # error.
+        # Imports need the `media` group and a group-writable umask; `mkForce`
+        # because unit settings merge by equality rather than precedence.
         users.users.${name}.extraGroups = [ "media" ];
         systemd.services.${name}.serviceConfig.UMask = lib.mkForce "002";
       };
     };
 
-  /**
-    Shared requirements and Cloudflare certificate settings for a web service.
-    Keep assertions outside the implementation guarded by `dependenciesEnabled`.
-  */
+  # Shared requirements and Cloudflare certificate settings for a web service.
+  # Keep assertions outside the implementation guarded by `dependenciesEnabled`.
   mkWebService =
     { config, name }:
     let
@@ -260,29 +192,8 @@ let
       };
     };
 
-  /**
-    Point a `sops.secrets.<name>` definition at a file under `secrets/`.
-
-    `file` is the file name without the `.yaml` extension. `dir` picks the
-    subdirectory it lives in and defaults to `services`; pass `dir = ""` for a
-    file at the top level of `secrets/`, such as `secrets/eek.yaml`.
-
-    Every other argument is forwarded to the secret definition, so `owner`,
-    `group`, `mode` and `key` all behave as `sops-nix` documents.
-
-    # Type
-
-    ```
-    mkSecret :: AttrSet -> AttrSet
-    ```
-
-    # Example
-
-    ```nix
-    sops.secrets.tailscale-auth = mkSecret { file = "tailscale"; key = "auth-key"; };
-    sops.secrets.user-password = mkSecret { file = "eek"; dir = ""; key = "password"; };
-    ```
-  */
+  # Points a `sops.secrets.<name>` definition at a file under `secrets/`: `file`
+  # is the name without `.yaml`, `dir` its subdirectory ("" for the top level).
   mkSecret =
     {
       file,

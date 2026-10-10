@@ -3,18 +3,14 @@ let
   inherit (lib) mkEnableOption mkOption types;
 in
 {
-  # Declared here rather than in `modules/shared/options.nix` on purpose: these
-  # are Linux-only concepts. Declaring them in the shared module would expose
-  # them on Darwin too, where a host could set `desktop.niri.enable = true` and
-  # have nothing happen. Here they simply do not exist off NixOS, so misuse is
-  # an evaluation error rather than a silent no-op.
+  # Linux-only, so declared here: on Darwin these options do not exist and
+  # setting one is an evaluation error rather than a silent no-op.
   options.toua = {
     desktop = {
       gnome.enable = mkEnableOption "Enable the GNOME desktop";
 
-      # Registers the niri session with the display manager and sets up its
-      # portals. The window manager's *user* configuration — config.kdl,
-      # waybar, fuzzel, mako — is the separate `toua.programs.niri.enable`.
+      # Registers the session with the display manager and its portals; the
+      # window manager's own config.kdl is `toua.programs.niri.enable`.
       niri.enable = mkEnableOption "Register the niri session";
     };
 
