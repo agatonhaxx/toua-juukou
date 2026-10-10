@@ -97,6 +97,14 @@ in
             dns = {
               magic_dns = true;
               base_domain = cfg.baseDomain;
+
+              # Split DNS: a node keeps its own resolver and sends only names
+              # under `baseDomain` to MagicDNS. Overriding would instead route
+              # every node's lookups through a resolver named here, and the
+              # nixpkgs module asserts that a config overriding local DNS carries
+              # one — an upstream no machine of this fleet should depend on from
+              # wherever it roams.
+              override_local_dns = false;
             };
 
             derp = {
