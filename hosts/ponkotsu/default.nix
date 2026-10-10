@@ -1,11 +1,17 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  groups = import ../../modules/groups.nix;
+  inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
+in
 {
   imports = [ ../../user ];
 
-  toua = {
-    profiles.wsl.enable = true;
+  # WSL keeps the shared terminal setup and the tailnet, and nothing graphical.
+  toua = lib.mkMerge [
+    (mkDefaults groups.cli)
+    (mkDefaults groups.network)
     #TODO add copy paste to wsl from windows
-  };
+  ];
 
   programs.nix-ld.enable = true;
 

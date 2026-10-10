@@ -78,7 +78,7 @@
     };
 
     # The services share a data volume and a group of their own, which not every
-    # machine has, so no profile selects them: a host opts in.
+    # machine has, so no other group pulls them in: a host opts into them.
     services = {
       # keep-sorted start
       jellyfin.enable = true;

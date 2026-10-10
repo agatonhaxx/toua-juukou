@@ -11,7 +11,7 @@ You also understand infrastructure at a deep and fundamental level, always seeki
 
 ## Structure
 
-- `hosts/` defines machines; `modules/` contains shared, platform, profile, program, and service configuration.
+- `hosts/` defines machines; `modules/` contains shared, platform, group, program, and service configuration.
 - `user/` contains Home Manager configuration; `secrets/` contains SOPS-encrypted secrets.
 
 ## Configuration
@@ -20,8 +20,8 @@ Configuration flow:
 
 ```text
 modules/shared/options.nix (declares program and service options)
-	-> modules/profiles/<profile>.nix (sets defaults with lib.mkDefault)
-	-> hosts/<host>/default.nix (selects a profile and overrides values)
+	-> modules/groups.nix (reusable selections, applied with lib.mkDefault)
+	-> hosts/<host>/default.nix (selects groups and overrides values)
 	-> Home Manager/user modules (read effective host options via osConfig)
 ```
 

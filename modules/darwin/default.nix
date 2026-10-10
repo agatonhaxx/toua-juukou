@@ -1,7 +1,6 @@
 {
   imports = [
     # keep-sorted start
-    ../profiles/mac.nix
     ../services
     ./brew
     ./hardware

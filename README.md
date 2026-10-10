@@ -5,18 +5,12 @@
 My Nix configuration for all my machines.
 
 - `hosts/` says what is special about each machine.
-- `modules/` contains profiles, hardware, services, and shared system options.
+- `modules/` contains groups, hardware, services, and shared system options.
 - `pkgs/` contains custom package builds and the shared Nixpkgs overlay.
 - `user/` contains Home Manager applications and settings.
 - `secrets/` contains only SOPS-encrypted secrets.
 
 ## How configuration works
-
-Hosts select a machine profile:
-
-```nix
-toua.profiles.desktop.enable = true;
-```
 
 All `toua.programs.<name>.enable` and `toua.services.<name>.enable` options
 default to false. `modules/groups.nix` holds reusable selections with the same
@@ -34,21 +28,22 @@ server.services = {
 };
 ```
 
-Profiles compose groups using the helpers in `modules/shared/lib.nix`:
+A host selects the groups it takes, using the helpers in
+`modules/shared/lib.nix`:
 
 ```nix
-config.toua = lib.mkIf cfg.enable (lib.mkMerge [
+toua = lib.mkMerge [
   (mkDefaults groups.cli)
   (mkDefaults groups.dev)
   (mkDefaults groups.network)
-]);
+];
 ```
 
-`mkDefaults` applies `lib.mkDefault` to each setting. Hosts override individual
-settings with ordinary assignments, for example `toua.programs.just.enable = false;`.
-Group selection is explicit; there are no group enable switches. The desktop and
-Mac profiles select CLI, GUI, media, and network groups; WSL selects CLI and
-network; headless additionally selects the server group.
+`mkDefaults` applies `lib.mkDefault` to each setting, so a group never contends
+with what the host says itself. Hosts override individual settings with ordinary
+assignments, for example `toua.programs.just.enable = false;`. Group selection is
+explicit; there are no group enable switches, and what a machine is — laptop,
+WSL, headless server, Mac — is the set of groups it names.
 
 Home Manager declares corresponding user-owned `toua.programs` options in
 `user/options.nix` and inherits the effective host selections as defaults. User
@@ -59,25 +54,25 @@ toua.programs.jq.enable = false;
 programs.atuin.settings.auto_sync = true;
 ```
 
-Machine services and Homebrew installations resolve at profile → host level.
+Machine services and Homebrew installations resolve at host level.
 Home Manager programs and packages (including Flow) resolve at
-profile → host → user level. On Darwin, enabling user configuration for Firefox,
+host → user level. On Darwin, enabling user configuration for Firefox,
 Chromium, VS Code, or KiwiDesk requires the application to be installed at host
 level; disabling its user configuration does not uninstall the cask.
 
 `toua.graphical.enable` controls graphical user settings independently of program
 selection. `toua.fonts.enable` controls fonts. Both are false unless explicitly
-selected by a profile, host, or user.
+selected by a host or user.
 
 ## Hosts
 
-| Host | Profile | Purpose |
-| --- | --- | --- |
-| `bender` | `desktop` | NixOS laptop |
-| `baymax` | `desktop` | NixOS desktop workstation, media server, and backup destination |
-| `mac` | `mac` | nix-darwin laptop |
-| `ponkotsu` | `wsl` | WSL development machine |
-| `wall-e` | `headless` | Public services and client backup destination |
+| Host | Purpose |
+| --- | --- |
+| `bender` | NixOS laptop |
+| `baymax` | NixOS desktop workstation, media server, and backup destination |
+| `mac` | nix-darwin laptop |
+| `ponkotsu` | WSL development machine |
+| `wall-e` | Public services and client backup destination |
 
 Baymax is installed locally from a NixOS USB installer rather than by
 `nixos-anywhere`; see `hosts/baymax/INSTALL.md`.
@@ -104,19 +99,19 @@ target disk. Do not run it for an ordinary update.
    ungrouped option in `modules/shared/options.nix`. Darwin-only cask options are
    declared in `modules/darwin/options.nix`.
 2. For simple Home Manager toggles, add its name to
-   `modules/programs/cli/defaults.nix` or `gui/defaults.nix`. Package-only tools
-   use the explicit package mappings; simple casks use
-   `modules/darwin/brew/defaults.nix`.
+   `modules/programs/cli/default.nix` or `gui/default.nix`. Package-only tools use
+   the explicit package mappings; simple casks use
+   `modules/darwin/brew/default.nix`.
 3. Keep dedicated modules for additional behavior, platform handling, and MIME
    associations. Home Manager implementations read `config.toua.programs`;
    machine implementations read their system `config.toua.programs`.
-4. Select the group in a profile or host, then override individual toggles and
-   native options at host or user level as appropriate.
+4. Select the group in the host, then override individual toggles and native
+   options at host or user level as appropriate.
 
 Custom builds live under `pkgs/<name>/package.nix` and are exposed through
 `pkgs/overlay.nix`. Flow is available as `pkgs.flow` and `nix build .#flow` on
 Intel and ARM Linux/macOS. `toua.programs.flow.enable` installs it for the user;
-profiles select it through the media group. Linux uses the upstream Debian
+the media group selects it. Linux uses the upstream Debian
 package with Nix-managed GTK, WebKit, GStreamer codecs, and the Node fallback.
 
 `pkgs.mouse-wheel-debounce` drops mouse wheel encoder chatter. It is not a
@@ -138,10 +133,10 @@ module, because it answers one failing wheel and not a fleet-wide policy.
    `modules/services/`, which is why a service touching `security.acme`,
    `services.nginx` or `toua.domain` belongs in `modules/nixos/services/`.
 5. Add suitable services to a group in `modules/groups.nix` and select it in a
-   profile or host. The `network` group selects Tailscale; `server` selects the
+   host. The `network` group selects Tailscale; `server` selects the
    infrastructure stack; `media.services` selects the media stack, which needs a
-   data volume and a group its services share, so no profile selects it. Service
-   enable options always default to false.
+   data volume and a group its services share, so no other group pulls it in and a
+   host opts into it. Service enable options always default to false.
 
 Two enabled services on one host cannot hold the same port, so
 `modules/shared/ports.nix` asserts that. A service declared with a default port
@@ -157,7 +152,7 @@ vhosts and certificates from each service's own port.
 Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
 `toua.services.nginx.enable`. Vaultwarden also requires
 `toua.services.kanidm.enable` for SSO. These dependencies must be enabled
-explicitly or through the `headless` profile; missing dependencies fail assertions.
+explicitly, as the `server` group does; missing dependencies fail assertions.
 Set `toua.domain` for the service stack and `toua.email` for the ACME contact.
 Kanidm user email addresses are configured separately under
 `services.kanidm.provision.persons`.
@@ -166,10 +161,11 @@ Kanidm user email addresses are configured separately under
 
 1. Add `hosts/<name>/default.nix`.
 2. Register it in `hosts/default.nix`.
-3. Set `toua.profiles` and the host's hardware/filesystem options. Nothing has to
-   be said about users: the primary user defaults to `eek`, is always managed,
-   and its Home Manager tree defaults to `user/eek`. Name `toua.primaryUser`, or
-   add a `toua.users` entry with its own `homeModule`, only when a host differs.
+3. Name the groups it takes in `toua` and set the host's hardware/filesystem
+   options. Nothing has to be said about users: the primary user defaults to
+   `eek`, is always managed, and its Home Manager tree defaults to `user/eek`.
+   Name `toua.primaryUser`, or add a `toua.users` entry with its own `homeModule`,
+   only when a host differs.
 4. Generate its SSH host key and print the age recipient:
 
    ```sh

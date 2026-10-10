@@ -47,15 +47,24 @@ in
   services.avahi.ipv6 = false;
 
   toua = lib.mkMerge [
+    (mkDefaults groups.cli)
+    (mkDefaults groups.gui)
+    (mkDefaults groups.network)
+
+    # Both halves of the media group: this host runs the services and plays the
+    # files, so unlike the laptop it takes everything the group holds.
+    (mkDefaults groups.media)
+
     (mkDefaults groups.dev)
     (mkDefaults groups.agents)
+    (mkDefaults {
+      programs.niri.enable = true;
+      desktop.gnome.enable = true;
+      desktop.niri.enable = true;
+      displayManager.gdm.enable = true;
+    })
 
-    # Only its services: the desktop profile above already brings the group's
-    # programs.
-    (mkDefaults { inherit (groups.media) services; })
     {
-      profiles.desktop.enable = true;
-
       programs = {
         blueman.enable = true;
         bluetooth.enable = true;

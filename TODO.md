@@ -16,6 +16,6 @@ Lower-priority findings from a repo audit, not yet acted on. See
 scheduled.
 
 - `modules/nixos/services/borgbackup.nix` is wired up but inert. The module is
-  live — `modules/groups.nix` enables it and `modules/profiles/headless.nix`
-  applies it to every headless host — so the work is not deleting it but
-  defining the `jobs`/`repos`/`mirrors` it emits nothing without.
+  live — `modules/groups.nix` enables it and every host that selects the `server`
+  group applies it — so the work is not deleting it but defining the
+  `jobs`/`repos`/`mirrors` it emits nothing without.

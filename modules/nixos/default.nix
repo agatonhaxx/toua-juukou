@@ -2,10 +2,6 @@
 {
   imports = [
     # keep-sorted start
-
-    ../profiles/desktop.nix
-    ../profiles/headless.nix
-    ../profiles/wsl.nix
     # Declares the service options and holds the implementations both platforms
     # share, so it is imported here and by the darwin side.
     ../services

@@ -19,12 +19,21 @@ in
   # login, so `user/shells/fish.nix` re-prepends them (nix-darwin#122).
 
   toua = lib.mkMerge [
+    (mkDefaults groups.cli)
+    (mkDefaults groups.gui)
+
+    # Only the programs: the services under `media` need a data volume and a
+    # group the services share, so a host opts into them.
+    (mkDefaults { inherit (groups.media) programs; })
+    (mkDefaults groups.mac)
+    (mkDefaults groups.network)
+    (mkDefaults { homebrew.enable = true; })
+
     (mkDefaults groups.agents)
     (mkDefaults groups.dev)
     (mkDefaults groups.k8s)
     {
       primaryUser = "Glenn.Dahl";
-      profiles.mac.enable = true;
 
       programs = {
         # keep-sorted start

@@ -1,4 +1,8 @@
-{ inputs, ... }:
+{ inputs, lib, ... }:
+let
+  groups = import ../../modules/groups.nix;
+  inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
+in
 {
   imports = [
     ../../user
@@ -6,9 +10,24 @@
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-yoga
   ];
 
-  toua = {
-    profiles.desktop.enable = true;
-  };
+  # bender is the laptop: the shared terminal setup and graphical programs, the
+  # media players (not their services, which need a data volume), the tailnet,
+  # and the GNOME/niri desktop stack.
+  toua = lib.mkMerge [
+    (mkDefaults groups.cli)
+    (mkDefaults groups.gui)
+
+    # Only the programs: the services under `media` need a data volume and a
+    # group the services share, so a host opts into them.
+    (mkDefaults { inherit (groups.media) programs; })
+    (mkDefaults groups.network)
+    (mkDefaults {
+      programs.niri.enable = true;
+      desktop.gnome.enable = true;
+      desktop.niri.enable = true;
+      displayManager.gdm.enable = true;
+    })
+  ];
 
   networking = {
     hostName = "bender";

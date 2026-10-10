@@ -3,6 +3,9 @@
   ...
 }:
 let
+  groups = import ../../modules/groups.nix;
+  inherit (import ../../modules/shared/lib.nix { inherit lib; }) mkDefaults;
+
   domain = "huxe.eu";
 
   # The media services wall-e fronts for tailnet clients only; nginx refuses
@@ -28,67 +31,71 @@ in
     ./disko.nix
   ];
 
-  toua = {
+  toua = lib.mkMerge [
     # wall-e is a headless service host. Keep the shared terminal setup, but do
     # not pull graphical applications or media players into its closure.
-    profiles.headless.enable = true;
+    (mkDefaults groups.cli)
+    (mkDefaults groups.network)
+    (mkDefaults groups.server)
 
-    inherit domain;
-    email = "glenn@huxe.eu";
+    {
+      inherit domain;
+      email = "glenn@huxe.eu";
 
-    # Endpoints for the services on baymax, which wall-e reaches over Tailscale
-    # by its MagicDNS name. `enable` stays false: the services run on baymax and
-    # this host only fronts them. Only a name someone off the tailnet has to
-    # resolve needs a Cloudflare A/AAAA record pointing here, and acme's DNS-01
-    # challenge needs none: the seven tailnet-only names below have no public
-    # record at all, and the two public ones are the only entries that do.
-    services =
-      (lib.genAttrs tailnetServices (name: {
-        # headscale's `baseDomain`.
-        domain = "${name}.local.${domain}";
-
-        proxy = {
-          host = "baymax";
-          access = "tailnet";
-        };
-      }))
-      // {
-        # The tailnet's control server, and the reason every other entry here can
-        # be addressed as `baymax`: MagicDNS resolves that name for every node that
-        # joins. Selected here rather than in a group, because one host runs it.
-        # This one is public, so `${domain}` needs its own Cloudflare record.
-        headscale = {
-          enable = true;
-
-          # Wall-E's own addresses on the tailnet, which headscale publishes as
-          # the record for every tailnet-only vhost above. It keeps a node's
-          # addresses in its database rather than deriving them, so these change
-          # only if Wall-E enrols from scratch.
-          tailnetAddresses = [
-            "100.64.0.2"
-            "fd7a:115c:a1e0::2"
-          ];
-        };
-
-        # Public, for phones and televisions away from the tailnet.
-        pics = {
-          domain = "pics.${domain}";
+      # Endpoints for the services on baymax, which wall-e reaches over Tailscale
+      # by its MagicDNS name. `enable` stays false: the services run on baymax and
+      # this host only fronts them. Only a name someone off the tailnet has to
+      # resolve needs a Cloudflare A/AAAA record pointing here, and acme's DNS-01
+      # challenge needs none: the seven tailnet-only names below have no public
+      # record at all, and the two public ones are the only entries that do.
+      services =
+        (lib.genAttrs tailnetServices (name: {
+          # headscale's `baseDomain`.
+          domain = "${name}.local.${domain}";
 
           proxy = {
             host = "baymax";
+            access = "tailnet";
+          };
+        }))
+        // {
+          # The tailnet's control server, and the reason every other entry here can
+          # be addressed as `baymax`: MagicDNS resolves that name for every node that
+          # joins. Selected here rather than in a group, because one host runs it.
+          # This one is public, so `${domain}` needs its own Cloudflare record.
+          headscale = {
+            enable = true;
 
-            # Originals and videos are uploaded through here, far past nginx's
-            # 1m default.
-            maxBodySize = "5g";
+            # Wall-E's own addresses on the tailnet, which headscale publishes as
+            # the record for every tailnet-only vhost above. It keeps a node's
+            # addresses in its database rather than deriving them, so these change
+            # only if Wall-E enrols from scratch.
+            tailnetAddresses = [
+              "100.64.0.2"
+              "fd7a:115c:a1e0::2"
+            ];
+          };
+
+          # Public, for phones and televisions away from the tailnet.
+          pics = {
+            domain = "pics.${domain}";
+
+            proxy = {
+              host = "baymax";
+
+              # Originals and videos are uploaded through here, far past nginx's
+              # 1m default.
+              maxBodySize = "5g";
+            };
+          };
+
+          jellyfin = {
+            domain = "stream.${domain}";
+            proxy.host = "baymax";
           };
         };
-
-        jellyfin = {
-          domain = "stream.${domain}";
-          proxy.host = "baymax";
-        };
-      };
-  };
+    }
+  ];
 
   # These NixOS options default to true even without a desktop. They install
   # MIME, icon, sound-theme and fontconfig data that wall-e does not use.
