@@ -357,7 +357,7 @@ The media services run on Baymax and are reached over the LAN:
 - immich: `http://baymax:2283`
 
 They also have names under `huxe.eu`, which Wall-E serves by proxying over
-Tailscale: `https://immich.huxe.eu` and `https://jellyfin.huxe.eu` are public,
+Tailscale: `https://pics.huxe.eu` and `https://stream.huxe.eu` are public,
 and `https://<service>.huxe.eu` for the other seven is served only to clients on
 the tailnet. Each name needs a Cloudflare A/AAAA record pointing at Wall-E before
 ACME can issue its certificate. Two settings stay in a WebUI: Jellyfin needs

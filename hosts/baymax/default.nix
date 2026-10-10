@@ -63,10 +63,10 @@ in
 
       # Every media service keeps its state on the nvme at /data/baymax/qt.
       services = {
-        immich.dataDir = "/data/baymax/qt/immich";
+        pics.dataDir = "/data/baymax/qt/immich";
         jellyfin.dataDir = "/data/baymax/qt/jellyfin";
 
-        navidrome = {
+        music = {
           dataDir = "/data/baymax/qt/navidrome";
           musicDir = "/data/baymax/music";
         };

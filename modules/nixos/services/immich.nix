@@ -6,11 +6,11 @@
 let
   inherit (import ../../shared/lib.nix { inherit lib; }) mkServiceOption;
 
-  cfg = config.toua.services.immich;
+  cfg = config.toua.services.pics;
 in
 {
-  options.toua.services.immich =
-    mkServiceOption "immich" {
+  options.toua.services.pics =
+    mkServiceOption "pics" {
       port = 2283;
       host = "0.0.0.0";
     }

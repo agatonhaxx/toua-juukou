@@ -56,8 +56,8 @@ in
         headscale.enable = true;
 
         # Public, for phones and televisions away from the tailnet.
-        immich = {
-          domain = "immich.${domain}";
+        pics = {
+          domain = "pics.${domain}";
 
           proxy = {
             host = "baymax";

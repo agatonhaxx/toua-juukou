@@ -81,9 +81,9 @@
     # machine has, so no profile selects them: a host opts in.
     services = {
       # keep-sorted start
-      immich.enable = true;
       jellyfin.enable = true;
-      navidrome.enable = true;
+      music.enable = true;
+      pics.enable = true;
       prowlarr.enable = true;
       qbittorrent.enable = true;
       radarr.enable = true;

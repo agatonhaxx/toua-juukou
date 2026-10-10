@@ -6,11 +6,11 @@
 let
   inherit (import ../../shared/lib.nix { inherit lib; }) mkServiceOption;
 
-  cfg = config.toua.services.navidrome;
+  cfg = config.toua.services.music;
 in
 {
-  options.toua.services.navidrome =
-    mkServiceOption "navidrome" {
+  options.toua.services.music =
+    mkServiceOption "music" {
       port = 4533;
       host = "0.0.0.0";
     }
