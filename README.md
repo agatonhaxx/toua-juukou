@@ -170,8 +170,8 @@ Kanidm user email addresses are configured separately under
    just age-recipient /etc/ssh/ssh_host_ed25519_key.pub
    ```
 
-5. Add that recipient to the `keys:` block in `.sops.yaml` and to both host
-   lists under it, `&huxe` and `&all`, then update applicable secrets:
+5. Add that recipient to the `keys:` block in `.sops.yaml` and to the `&huxe`
+   list under it, then update applicable secrets:
 
    ```sh
    just secrets-update

@@ -8,9 +8,8 @@ keys:
   - &wall-e age1muxs363pzdyagcgdq5wqumv773rlffedg0wxw6nl4u59xuht8uzsjt25sm
   - &baymax age10tspkmr6fkjqegtuefp26qlxc74365cgqwfer6ac3szeemk6mpyqcl73lq
 
-  # `huxe` is the set the shared service secrets go to; `all` adds baymax, for
-  # the one secret that carries eek's identity to every machine. A new host
-  # belongs in both.
+  # The set the shared service secrets go to, including the secret that carries
+  # eek's identity. A new host belongs here.
   - &huxe [*eek, *bender, *ponkotsu, *mac, *wall-e, *baymax]
 
 creation_rules:
