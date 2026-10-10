@@ -36,12 +36,27 @@ let
       forceSSL = true;
       extraConfig = lib.optionalString (proxy.access == "tailnet") tailnetOnly;
 
+      # `proxy_pass` with a variable in it defers the name lookup to request
+      # time. nginx otherwise resolves it once, while loading its config, and
+      # refuses to start when the backend name does not answer yet — which takes
+      # down every vhost on the host, the control server included, so the backend
+      # can never enrol through the very name that would have resolved it.
       locations."/" = {
-        proxyPass = "http://${proxy.host}:${toString service.port}";
+        proxyPass = "http://$backend";
         proxyWebsockets = proxy.websockets;
 
         extraConfig = lib.concatLines (
-          lib.optional (proxy.maxBodySize != null) "client_max_body_size ${proxy.maxBodySize};"
+          [
+            # A variable `proxy_pass` needs a resolver of its own; nginx does not
+            # consult /etc/resolv.conf for it. 100.100.100.100 is tailscaled's
+            # MagicDNS stub, the one resolver that knows the tailnet's names.
+            "resolver 100.100.100.100 valid=30s;"
+
+            # A rewrite-phase directive, so it holds a value before `proxy_pass`
+            # runs, whatever order they appear in here.
+            "set $backend \"${proxy.host}:${toString service.port}\";"
+          ]
+          ++ lib.optional (proxy.maxBodySize != null) "client_max_body_size ${proxy.maxBodySize};"
           ++ lib.optional (proxy.extraConfig != "") proxy.extraConfig
         );
       };
@@ -71,13 +86,12 @@ in
       _: service: lib.nameValuePair service.domain (vhost service)
     ) proxied;
 
-    # nginx resolves a `proxy_pass` hostname once, when it loads its config, and
-    # `baymax` is a MagicDNS name that exists only once this node is on the
-    # tailnet. Without this ordering a slow tailscaled at boot leaves nginx
-    # failed, and every vhost with it. `tailscaled.service` is the daemon;
-    # `tailscaled-autoconnect.service` is the `tailscale up` behind it, which
-    # nixpkgs documents as the unit to order after, and which is absent when the
-    # node does not enrol from a key.
+    # The deferred lookup above means nginx no longer fails when the tailnet is
+    # not up yet, so this ordering is only about the window: with it the vhosts
+    # answer as soon as the node is on the tailnet rather than 502-ing until it
+    # is. `tailscaled.service` is the daemon; `tailscaled-autoconnect.service` is
+    # the `tailscale up` behind it, which nixpkgs documents as the unit to order
+    # after, and which is absent when the node does not enrol from a key.
     systemd.services.nginx = lib.mkIf (proxied != { } && config.toua.services.tailscale.enable) {
       wants = [ "tailscaled.service" ];
       after = [
