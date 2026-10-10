@@ -99,9 +99,16 @@ in
     sounds.enable = false;
   };
 
-  # A fact about this host's resolver, so it is set as a default: lego's
-  # propagation check asks the 127.0.0.53 stub, which never sees the TXT record.
-  security.acme.defaults.extraLegoFlags = [ "--dns.propagation.disable-rns" ];
+  # The tailnet-only vhosts sit inside MagicDNS's base domain, and headscale
+  # answers authoritatively for it: lego's zone lookup for
+  # `radarr.local.huxe.eu` walks the SOA records up, stops at `local.huxe.eu`,
+  # and asks Cloudflare for a zone of that name, which does not exist — the
+  # order dies before the challenge is written. A public resolver keeps that
+  # lookup out of MagicDNS, and it is the one lego's propagation check queries
+  # too; this host's own stub resolver never sees the TXT record, which is what
+  # the check has to read. Only the resolver changes, not the name, so the
+  # challenge still lands in `huxe.eu`.
+  security.acme.defaults.dnsResolver = "1.1.1.1:53";
 
   # Static, like the dotfiles repo's Hetzner host: a /32 routed via a link-local
   # gateway, and `interface` is required on both gateways under `useNetworkd`.

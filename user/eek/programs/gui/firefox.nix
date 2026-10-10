@@ -18,6 +18,13 @@
         Enabled = true;
         ProviderURL = "https://mozilla.cloudflare-dns.com/dns-query";
         Fallback = false;
+
+        # MagicDNS is the only resolver that knows `local.huxe.eu`, and it is
+        # not one Firefox can reach over DoH: the public providers answer
+        # NXDOMAIN for it. Excluded names go to the system resolver instead,
+        # which tailscale points at 100.100.100.100, so the tailnet's own
+        # names resolve while everything else keeps using the encrypted one.
+        ExcludedDomains = [ "local.huxe.eu" ];
       };
 
       # `force_installed` cannot be removed, `normal_installed` is re-installed

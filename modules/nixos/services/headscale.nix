@@ -139,12 +139,15 @@ in
               # one — an upstream no machine of this fleet should depend on from
               # wherever it roams.
               override_local_dns = false;
-            };
 
-            # What makes the tailnet-only vhosts resolve. MagicDNS answers them
-            # with this host's tailnet address, so no public record exists for
-            # them to be reached through.
-            extra_records = extraRecords;
+              # What makes the tailnet-only vhosts resolve. MagicDNS answers them
+              # with this host's tailnet address, so no public record exists for
+              # them to be reached through. It belongs under `dns` rather than
+              # beside it: `settings` is freeform, so a list there renders at the
+              # top level of config.yaml, where headscale reads no records from
+              # and reports nothing either.
+              extra_records = extraRecords;
+            };
 
             derp = {
               server = {
