@@ -10,49 +10,50 @@ let
   cfg = config.toua.services.slskd;
 in
 {
-  options.toua.services.slskd = mkServiceOption "slskd" {
-    port = 5030;
-    host = "0.0.0.0";
-  }
-  // {
-    soulseekPort = lib.mkOption {
-      type = lib.types.port;
-      default = 50300;
-      description = "Port slskd accepts incoming Soulseek connections on.";
-    };
+  options.toua.services.slskd =
+    mkServiceOption "slskd" {
+      port = 5030;
+      host = "0.0.0.0";
+    }
+    // {
+      soulseekPort = lib.mkOption {
+        type = lib.types.port;
+        default = 50300;
+        description = "Port slskd accepts incoming Soulseek connections on.";
+      };
 
-    dataDir = lib.mkOption {
-      type = lib.types.path;
-      default = "/var/lib/slskd";
-      description = ''
-        slskd's application directory: the database, the logs, and by default
-        the download directories below.
-      '';
-    };
+      dataDir = lib.mkOption {
+        type = lib.types.path;
+        default = "/var/lib/slskd";
+        description = ''
+          slskd's application directory: the database, the logs, and by default
+          the download directories below.
+        '';
+      };
 
-    downloadsDir = lib.mkOption {
-      type = lib.types.path;
-      default = "${cfg.dataDir}/downloads";
-      description = "Where finished downloads are kept.";
-    };
+      downloadsDir = lib.mkOption {
+        type = lib.types.path;
+        default = "${cfg.dataDir}/downloads";
+        description = "Where finished downloads are kept.";
+      };
 
-    incompleteDir = lib.mkOption {
-      type = lib.types.path;
-      default = "${cfg.dataDir}/incomplete";
-      description = "Where downloads in progress are kept.";
-    };
+      incompleteDir = lib.mkOption {
+        type = lib.types.path;
+        default = "${cfg.dataDir}/incomplete";
+        description = "Where downloads in progress are kept.";
+      };
 
-    shares = lib.mkOption {
-      type = lib.types.listOf lib.types.path;
-      default = [ ];
-      description = "Directories shared on the Soulseek network; the unit sees them read-only.";
+      shares = lib.mkOption {
+        type = lib.types.listOf lib.types.path;
+        default = [ ];
+        description = "Directories shared on the Soulseek network; the unit sees them read-only.";
+      };
     };
-  };
 
   config = lib.mkIf cfg.enable {
     # slskd cannot create its own Soulseek account, so the credentials and the
     # WebUI login come from the environment file. That file holds one key, `env`,
-    # whose value is the dotenv block — the same shape as `mediamanager-env`:
+    # whose value is the dotenv block — the same shape as `vaultwarden-env`:
     #
     #   env: |
     #     SLSKD_SLSK_USERNAME=<soulseek username>
@@ -113,17 +114,20 @@ in
     # The database and the downloads share this directory, so it is group-owned
     # rather than private: the host's media group reads downloads below it, and
     # the unit needs the download directories to exist for its `ReadWritePaths`.
-    systemd.tmpfiles.settings."10-slskd" = lib.genAttrs [
-      cfg.dataDir
-      cfg.downloadsDir
-      cfg.incompleteDir
-    ] (_: {
-      d = {
-        user = "slskd";
-        group = "media";
-        mode = "2775";
-      };
-    });
+    systemd.tmpfiles.settings."10-slskd" =
+      lib.genAttrs
+        [
+          cfg.dataDir
+          cfg.downloadsDir
+          cfg.incompleteDir
+        ]
+        (_: {
+          d = {
+            user = "slskd";
+            group = "media";
+            mode = "2775";
+          };
+        });
 
     users.users.slskd.extraGroups = [ "media" ];
   };

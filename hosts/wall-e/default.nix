@@ -9,8 +9,6 @@
     # wall-e is a headless service host. Keep the shared terminal setup, but do
     # not pull graphical applications or media players into its closure.
     profiles.headless.enable = true;
-    primaryUser = "eek";
-    users.eek.homeModule = ../../user/eek;
 
     domain = "huxe.eu";
     email = "glenn@huxe.eu";

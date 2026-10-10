@@ -25,7 +25,9 @@ in
             enable = mkEnableOption "Manage this user";
             homeModule = mkOption {
               type = types.path;
-              default = ../../user/home.nix;
+              # The repo's user tree. A second user needs its own, named on the
+              # host.
+              default = ../../user/eek;
               description = "Home Manager module for this user.";
             };
           };

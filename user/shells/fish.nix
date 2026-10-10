@@ -8,8 +8,11 @@
   programs.fish = {
     enable = lib.mkDefault config.toua.programs.fish.enable;
 
-    # Addresses $PATH re-ordering by Apple's `path_helper` tool, prioritising Apple’s tools over Nix ones.
-    # https://github.com/LnL7/nix-darwin/issues/122
+    # Fish reads no /etc/profile, so this is the only thing that puts the
+    # system profile directories on its PATH. It prepends them rather than
+    # appending, so the Nix binaries win over anything a login script puts in
+    # front later — on macOS that is `path_helper`, which hosts/mac/default.nix
+    # describes.
     loginShellInit =
       let
         # On NixOS, privileged commands such as sudo must resolve through the

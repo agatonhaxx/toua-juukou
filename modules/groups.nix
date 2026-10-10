@@ -85,8 +85,10 @@
       navidrome.enable = true;
       prowlarr.enable = true;
       qbittorrent.enable = true;
+      radarr.enable = true;
       sabnzbd.enable = true;
       slskd.enable = true;
+      sonarr.enable = true;
       # keep-sorted end
     };
   };
@@ -97,7 +99,9 @@
     sf-symbols.enable = true;
   };
 
-  network.services.tailscale.enable = true;
+  network.services = {
+    tailscale.enable = true;
+  };
 
   server.services = {
     # keep-sorted start

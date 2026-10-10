@@ -1,0 +1,11 @@
+# A machine-generated dump: a diff of it is never read, and the change that
+# matters is already in the commit message.
+flake.lock -diff
+
+# SOPS ciphertext. `-text` keeps git from touching its line endings, which would
+# corrupt it, and `-diff` stops one re-encryption from reading as a whole-file
+# change. `sops -d` and `just secrets-update` are how these are reviewed.
+secrets/** -text -diff
+
+# Icons are read by macOS, never by a person.
+*.icns binary

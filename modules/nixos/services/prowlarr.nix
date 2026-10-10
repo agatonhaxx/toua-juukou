@@ -9,25 +9,25 @@ let
   cfg = config.toua.services.prowlarr;
 in
 {
-  options.toua.services.prowlarr = mkServiceOption "prowlarr" {
-    # Upstream's default, and the port MediaManager's Prowlarr integration
-    # expects.
-    port = 9696;
+  options.toua.services.prowlarr =
+    mkServiceOption "prowlarr" {
+      # Upstream's default, and the port the arrs and the WebUI expect.
+      port = 9696;
 
-    # Reached over the LAN rather than through a proxy, so it listens on every
-    # interface.
-    host = "0.0.0.0";
-  }
-  // {
-    dataDir = lib.mkOption {
-      type = lib.types.path;
-      default = "/var/lib/prowlarr";
-      description = ''
-        Prowlarr's own directory: its configuration, database and the API key
-        it generates.
-      '';
+      # Reached over the LAN rather than through a proxy, so it listens on every
+      # interface.
+      host = "0.0.0.0";
+    }
+    // {
+      dataDir = lib.mkOption {
+        type = lib.types.path;
+        default = "/var/lib/prowlarr";
+        description = ''
+          Prowlarr's own directory: its configuration, database and the API key
+          it generates.
+        '';
+      };
     };
-  };
 
   config = lib.mkIf cfg.enable {
     # No `media` group here, unlike its siblings: Prowlarr reads no library and

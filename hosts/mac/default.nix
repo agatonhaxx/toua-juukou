@@ -18,13 +18,20 @@ in
     ../../user
   ];
 
+  # macOS's `path_helper` rewrites $PATH at every login and puts Apple's
+  # binaries ahead of the Nix ones. `user/shells/fish.nix` re-prepends the Nix
+  # directories in `loginShellInit` to undo that — the block it does it in is
+  # generic, because fish never reads /etc/profile and so needs the same
+  # prepend for a working PATH on NixOS. The macOS reason is written down here,
+  # on the host it applies to.
+  # https://github.com/LnL7/nix-darwin/issues/122
+
   toua = lib.mkMerge [
     (mkDefaults groups.agents)
     (mkDefaults groups.dev)
     (mkDefaults groups.k8s)
     {
       primaryUser = "Glenn.Dahl";
-      users."Glenn.Dahl".homeModule = ../../user/eek;
       profiles.mac.enable = true;
 
       programs = {

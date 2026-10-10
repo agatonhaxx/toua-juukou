@@ -8,9 +8,6 @@
 
   toua = {
     profiles.desktop.enable = true;
-    primaryUser = "eek";
-    users.eek.homeModule = ../../user/eek;
-
   };
 
   networking = {

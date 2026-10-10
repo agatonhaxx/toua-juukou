@@ -105,7 +105,8 @@ target disk. Do not run it for an ordinary update.
    declared in `modules/darwin/options.nix`.
 2. For simple Home Manager toggles, add its name to
    `modules/programs/cli/defaults.nix` or `gui/defaults.nix`. Package-only tools
-   use the explicit package mappings; simple casks use `homebrew/defaults.nix`.
+   use the explicit package mappings; simple casks use
+   `modules/darwin/brew/defaults.nix`.
 3. Keep dedicated modules for additional behavior, platform handling, and MIME
    associations. Home Manager implementations read `config.toua.programs`;
    machine implementations read their system `config.toua.programs`.
@@ -128,7 +129,9 @@ module, because it answers one failing wheel and not a fleet-wide policy.
 
 1. Add one service definition under `modules/services/` (loaded on every class)
    or `modules/nixos/services/` (NixOS only).
-2. Declare its `toua.services.<name>` options in that file.
+2. Declare its `toua.services.<name>` options in that file, normally through
+   `mkServiceOption`; Radarr and Sonarr share `mkArr` in
+   `modules/shared/lib.nix` for the same reason.
 3. Gate its implementation on `toua.services.<name>.enable`.
 4. Nothing else is needed: each directory's `default.nix` imports every sibling
    through `importDir`. NixOS imports both directories; Darwin imports only
@@ -139,6 +142,11 @@ module, because it answers one failing wheel and not a fleet-wide policy.
    infrastructure stack; `media.services` selects the media stack, which needs a
    data volume and a group its services share, so no profile selects it. Service
    enable options always default to false.
+
+Two enabled services on one host cannot hold the same port, so
+`modules/shared/ports.nix` asserts that. A service declared with a default port
+of 0 binds none of its own and is outside the check, which is how the services
+that only ever sit behind nginx are declared.
 
 Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
 `toua.services.nginx.enable`. Vaultwarden also requires
@@ -152,15 +160,18 @@ Kanidm user email addresses are configured separately under
 
 1. Add `hosts/<name>/default.nix`.
 2. Register it in `hosts/default.nix`.
-3. Set `toua.profiles`, `toua.primaryUser`, `toua.users`, and the host's
-   hardware/filesystem options.
+3. Set `toua.profiles` and the host's hardware/filesystem options. Nothing has to
+   be said about users: the primary user defaults to `eek`, is always managed,
+   and its Home Manager tree defaults to `user/eek`. Name `toua.primaryUser`, or
+   add a `toua.users` entry with its own `homeModule`, only when a host differs.
 4. Generate its SSH host key and print the age recipient:
 
    ```sh
    just age-recipient /etc/ssh/ssh_host_ed25519_key.pub
    ```
 
-5. Add that recipient to `.sops.yaml`, then update applicable secrets:
+5. Add that recipient to the `keys:` block in `.sops.yaml` and to both host
+   lists under it, `&huxe` and `&all`, then update applicable secrets:
 
    ```sh
    just secrets-update
@@ -275,16 +286,15 @@ Service URLs:
 - Kanidm: `https://sso.huxe.eu`
 - Vaultwarden: `https://vault.huxe.eu`
 - Atuin: `https://atuin.huxe.eu`
-- MediaManager: `http://127.0.0.1:8000` on Baymax, which is not proxied; reach it
-  over the LAN or an SSH tunnel. Its `toua.services.mediamanager` secret needs
-  `just secret secrets/services/mediamanager.yaml` to exist before it is enabled.
 
 The media services run on Baymax and are reached over the LAN:
 
 - Jellyfin: `http://baymax:8096`
-- qBittorrent: `http://baymax:8080` — its save paths and password are the WebUI's
+- qBittorrent: `http://baymax:8080`
 - SABnzbd: `http://baymax:8081`
 - Prowlarr: `http://baymax:9696`
+- Sonarr: `http://baymax:8989`
+- Radarr: `http://baymax:7878`
 - slskd: `http://baymax:5030`, which needs
   `just secret secrets/services/slskd.yaml` to exist before it is enabled
 - Navidrome: `http://baymax:4533`
@@ -294,6 +304,13 @@ They keep their state under `/data/baymax/qt` and share the libraries and
 download trees through the `media` group, which your user is in as well; the
 trees were regrouped once and the command for it is in
 `hosts/baymax/default.nix`.
+
+Each of them owns its own secrets and its own view of the world: qBittorrent's
+save paths and password, slskd's accounts, and everything Sonarr and Radarr keep
+in their databases — indexers, download clients, root folders, quality profiles
+and the hardlink switch. None of that is a config file a host can declare, so
+Nix sets the port, the bind address and the data directory, and the WebUI keeps
+the rest.
 
 ## Known gaps
 

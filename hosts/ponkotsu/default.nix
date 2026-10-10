@@ -4,8 +4,6 @@
 
   toua = {
     profiles.wsl.enable = true;
-    primaryUser = "eek";
-    users.eek.homeModule = ../../user/eek;
     #TODO add copy paste to wsl from windows
   };
 

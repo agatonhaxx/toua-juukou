@@ -1,3 +1,5 @@
+# sops ignores this block. It is where each host's age recipient is named once,
+# so the creation rules below can be read as sets of hosts.
 keys:
   - &eek age1n5378elj0f6pkyludtlqtnpjs2335wrwecsklmzgf838asyx7f6s74ym2r
   - &bender age1nalndumtuymsz4v8gnqtns9gfykzwprsy4tq2pgwamjzete5q9pq74v5f0
@@ -6,26 +8,19 @@ keys:
   - &wall-e age1muxs363pzdyagcgdq5wqumv773rlffedg0wxw6nl4u59xuht8uzsjt25sm
   - &baymax age10tspkmr6fkjqegtuefp26qlxc74365cgqwfer6ac3szeemk6mpyqcl73lq
 
+  # `huxe` is the set the shared service secrets go to; `all` adds baymax, for
+  # the one secret that carries eek's identity to every machine. A new host
+  # belongs in both.
+  - &huxe [*eek, *bender, *ponkotsu, *mac, *wall-e, *baymax]
+
 creation_rules:
   - path_regex: secrets/eek\.yaml
     key_groups:
-      - age:
-          - *eek
-          - *bender
-          - *ponkotsu
-          - *mac
-          - *wall-e
-          - *baymax
+      - age: *huxe
 
-  # MediaManager and slskd run on baymax alone, so their secrets are kept off
-  # the other hosts. These rules precede the `services/` rule below because
-  # sops takes the first match, and the generic rule does not list baymax.
-  - path_regex: secrets/services/mediamanager\.(yaml|json|env|ini)$
-    key_groups:
-      - age:
-          - *eek
-          - *baymax
-
+  # slskd runs on baymax alone, so its secret is kept off the other hosts. This
+  # rule precedes the `services/` rule below because sops takes the first match,
+  # and that rule does not list baymax.
   - path_regex: secrets/services/slskd\.(yaml|json|env|ini)$
     key_groups:
       - age:
@@ -34,9 +29,4 @@ creation_rules:
 
   - path_regex: secrets/services/[^/]+\.(yaml|json|env|ini)$
     key_groups:
-      - age:
-          - *eek
-          - *bender
-          - *ponkotsu
-          - *mac
-          - *wall-e
+      - age: *huxe
