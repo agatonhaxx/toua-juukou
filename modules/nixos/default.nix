@@ -7,6 +7,7 @@
     ../services
     ./bluetooth.nix
     ./desktop.nix
+    ./gaming.nix
     ./options.nix
     ./packages.nix
     # The systemd implementations, which only NixOS has.

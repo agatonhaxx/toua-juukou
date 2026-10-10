@@ -9,7 +9,9 @@ let
 in
 {
   # Wayland/Linux-only, gated on the same flag as the session: otherwise a Darwin
-  # host pulls in `niri`, `swaybg`, `gamescope` and friends.
+  # host pulls in `niri`, `swaybg` and friends. gamescope is not here: it belongs
+  # to the gaming group, whose system wrapper carries cap_sys_nice, and a plain
+  # package in this earlier PATH entry would shadow it.
   home.packages = lib.mkIf niriEnabled (
     with pkgs;
     [
@@ -17,7 +19,6 @@ in
       brightnessctl # backlight control for dimming
       cliphist # clipboard history
       fuzzel # Wayland-native app launcher
-      gamescope
       labwc
       mako # notification daemon
       networkmanagerapplet
@@ -300,6 +301,11 @@ in
           touchpad {
               tap
               natural-scroll
+          }
+          mouse {
+              // Flat is 1:1 motion: niri's accel-speed default of 0.0 leaves
+              // libinput's flat profile with no constant factor to apply.
+              accel-profile "flat"
           }
       }
 

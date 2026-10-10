@@ -77,6 +77,13 @@ selected by a host or user.
 Baymax is installed locally from a NixOS USB installer rather than by
 `nixos-anywhere`; see `hosts/baymax/INSTALL.md`.
 
+Baymax is the only host that selects the `gaming` group: Steam with Proton-GE,
+GameMode, MangoHud, and gamescope with a session in GDM. The
+machine-level pieces those need — the larger `vm.max_map_count`, AppImage binfmt
+and the sched-ext `scx_bpfland` scheduler — are not programs with toggles of their
+own, so they hang off that host's `steam` toggle in `modules/nixos/gaming.nix`;
+baymax tracks `pkgs.linuxPackages_latest` for the same reason.
+
 ## Commands
 
 ```sh

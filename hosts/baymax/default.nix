@@ -29,6 +29,12 @@ in
     };
   };
 
+  # A gaming host wants a newer kernel than nixpkgs' default 6.18: sched-ext and
+  # the current amdgpu work land there first. `linuxPackages_latest` follows
+  # whatever nixpkgs still supports, so an update that drops a kernel and its
+  # successor arriving are both a rebuild and a reboot.
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   networking = {
     hostName = "baymax";
     networkmanager.enable = true;
@@ -54,6 +60,9 @@ in
     # Both halves of the media group: this host runs the services and plays the
     # files, so unlike the laptop it takes everything the group holds.
     (mkDefaults groups.media)
+
+    # The only host that plays games, so the only one that takes this group.
+    (mkDefaults groups.gaming)
 
     (mkDefaults groups.dev)
     (mkDefaults groups.agents)

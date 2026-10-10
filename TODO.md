@@ -6,7 +6,6 @@
 - remove caps entirely from esc
 - fix wallpaper repo as input
 - fix scroll
-- check isabekk for gaming settings
 - media services
 
 ## Repo review leftovers

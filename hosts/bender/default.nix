@@ -27,6 +27,11 @@ in
       desktop.niri.enable = true;
       displayManager.gdm.enable = true;
     })
+
+    # gamescope used to come in with niri's package list; the gaming group owns
+    # it now, so the laptop asks for it on its own rather than by taking a group
+    # whose other members are baymax's.
+    { programs.gamescope.enable = true; }
   ];
 
   networking = {

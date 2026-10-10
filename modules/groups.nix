@@ -67,6 +67,19 @@
     };
   };
 
+  # The games themselves and the tools that wrap them. What the group needs from
+  # the machine rather than from a user's session — the larger `vm.max_map_count`,
+  # AppImage binfmt and the sched-ext scheduler — is not a program of its own, so
+  # it hangs off `steam` in modules/nixos/gaming.nix.
+  gaming.programs = {
+    # keep-sorted start
+    gamemode.enable = true;
+    gamescope.enable = true;
+    mangohud.enable = true;
+    steam.enable = true;
+    # keep-sorted end
+  };
+
   media = {
     programs = {
       # keep-sorted start
