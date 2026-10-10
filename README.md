@@ -217,8 +217,10 @@ Wall-E runs [Headscale](https://headscale.net) as the tailnet's control server
 at `https://headscale.huxe.eu`, so the fleet does not depend on Tailscale's own
 coordination service, and serves its own DERP relay on UDP 3478 next to
 Tailscale's public ones. Inside the tailnet, MagicDNS resolves names under
-`tailnet.huxe.eu`, which is what lets Wall-E reach the Baymax services as
-`baymax`.
+`local.huxe.eu`, which is what lets Wall-E reach the Baymax services as
+`baymax`. It carries the tailnet-only service names too: headscale publishes an
+extra record for each one pointing at Wall-E's tailnet address, so they resolve
+for clients on the tailnet and nowhere else.
 
 `headscale.huxe.eu` needs a Cloudflare A/AAAA record pointing at Wall-E, and UDP
 3478 has to reach the box for the relay to be useful.
@@ -356,11 +358,14 @@ The media services run on Baymax and are reached over the LAN:
 - Navidrome: `http://baymax:4533`
 - immich: `http://baymax:2283`
 
-They also have names under `huxe.eu`, which Wall-E serves by proxying over
-Tailscale: `https://pics.huxe.eu` and `https://stream.huxe.eu` are public,
-and `https://<service>.huxe.eu` for the other seven is served only to clients on
-the tailnet. Each name needs a Cloudflare A/AAAA record pointing at Wall-E before
-ACME can issue its certificate. Two settings stay in a WebUI: Jellyfin needs
+Wall-E serves names for them by proxying over Tailscale. `https://pics.huxe.eu`
+and `https://stream.huxe.eu` are public and need a Cloudflare A/AAAA record
+pointing at Wall-E. The other seven are named under `local.huxe.eu` instead —
+`https://radarr.local.huxe.eu`, for instance — and served only to clients on the
+tailnet: MagicDNS resolves them through headscale, so they need no public
+record, and nginx refuses every other source. Certificates come from the
+Cloudflare DNS challenge in both cases, so no A record is needed to issue one.
+Two settings stay in a WebUI: Jellyfin needs
 Wall-E's tailnet address under *Known proxies* to see client addresses instead of
 the proxy's, and qBittorrent needs its own name allowed by the host-header
 validation above its port.

@@ -7,7 +7,8 @@ let
 
   # The media services wall-e fronts for tailnet clients only; nginx refuses
   # every other source. The list is the services' own names, and each one's
-  # port comes from its module.
+  # port comes from its module. They are named under the MagicDNS base domain,
+  # which is the only thing that resolves them; headscale publishes the record.
   tailnetServices = [
     # keep-sorted start
     "music"
@@ -37,11 +38,14 @@ in
 
     # Endpoints for the services on baymax, which wall-e reaches over Tailscale
     # by its MagicDNS name. `enable` stays false: the services run on baymax and
-    # this host only fronts them. Every name needs a Cloudflare A/AAAA record
-    # pointing here before acme can issue its certificate.
+    # this host only fronts them. Only a name someone off the tailnet has to
+    # resolve needs a Cloudflare A/AAAA record pointing here, and acme's DNS-01
+    # challenge needs none: the seven tailnet-only names below have no public
+    # record at all, and the two public ones are the only entries that do.
     services =
       (lib.genAttrs tailnetServices (name: {
-        domain = "${name}.${domain}";
+        # headscale's `baseDomain`.
+        domain = "${name}.local.${domain}";
 
         proxy = {
           host = "baymax";
@@ -52,8 +56,19 @@ in
         # The tailnet's control server, and the reason every other entry here can
         # be addressed as `baymax`: MagicDNS resolves that name for every node that
         # joins. Selected here rather than in a group, because one host runs it.
-        # `${domain}` needs its own Cloudflare record too, like the rest.
-        headscale.enable = true;
+        # This one is public, so `${domain}` needs its own Cloudflare record.
+        headscale = {
+          enable = true;
+
+          # Wall-E's own addresses on the tailnet, which headscale publishes as
+          # the record for every tailnet-only vhost above. It keeps a node's
+          # addresses in its database rather than deriving them, so these change
+          # only if Wall-E enrols from scratch.
+          tailnetAddresses = [
+            "100.64.0.2"
+            "fd7a:115c:a1e0::2"
+          ];
+        };
 
         # Public, for phones and televisions away from the tailnet.
         pics = {

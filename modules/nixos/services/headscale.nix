@@ -13,6 +13,25 @@ let
     name = "headscale";
   };
 
+  # The vhosts this host serves to tailnet clients only. Their names live under
+  # the MagicDNS base domain because nothing public resolves them: a client has
+  # to resolve the name to this host's tailnet address, which is the same thing
+  # nginx's own source check then relies on.
+  tailnetOnly = lib.filterAttrs (
+    _: service: (service.proxy or null) != null && service.proxy.access == "tailnet"
+  ) config.toua.services;
+
+  # One record per address per name. Tailscale carries A and AAAA only, so the
+  # address itself decides which of the two it is.
+  extraRecords = lib.concatMap (
+    service:
+    map (address: {
+      name = service.domain;
+      type = if lib.hasInfix ":" address then "AAAA" else "A";
+      value = address;
+    }) cfg.tailnetAddresses
+  ) (lib.attrValues tailnetOnly);
+
   # IANA gives STUN 3478, and it is the port headscale's own example uses. The
   # relay answers on UDP, so it never passes through nginx.
   stunPort = 3478;
@@ -29,8 +48,23 @@ in
     // {
       baseDomain = lib.mkOption {
         type = lib.types.str;
-        default = "tailnet.${toua.domain}";
-        description = "The MagicDNS base domain; nodes answer to `<host>.<baseDomain>`.";
+        default = "local.${toua.domain}";
+        description = "The MagicDNS base domain; nodes answer to `<host>.<baseDomain>`, and the tailnet-only vhosts are published under it as extra records.";
+      };
+
+      tailnetAddresses = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [
+          "100.64.0.2"
+          "fd7a:115c:a1e0::2"
+        ];
+        description = ''
+          This host's own addresses on the tailnet, one extra record per
+          tailnet-only vhost it fronts. headscale keeps a node's addresses in
+          its database rather than deriving them from anything here, so the host
+          that fronts those vhosts states them.
+        '';
       };
 
       derp = {
@@ -106,6 +140,11 @@ in
               # wherever it roams.
               override_local_dns = false;
             };
+
+            # What makes the tailnet-only vhosts resolve. MagicDNS answers them
+            # with this host's tailnet address, so no public record exists for
+            # them to be reached through.
+            extra_records = extraRecords;
 
             derp = {
               server = {
