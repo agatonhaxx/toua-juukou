@@ -10,7 +10,7 @@ let
   # port comes from its module.
   tailnetServices = [
     # keep-sorted start
-    "navidrome"
+    "music"
     "prowlarr"
     "qbittorrent"
     "radarr"
@@ -69,7 +69,7 @@ in
         };
 
         jellyfin = {
-          domain = "jellyfin.${domain}";
+          domain = "stream.${domain}";
           proxy.host = "baymax";
         };
       };
