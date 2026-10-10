@@ -5,6 +5,7 @@
 #
 # Prose in `secrets/` is still checked.
 [default.extend-words]
+hel = "hel"
 noice = "noice"
 
 [files]

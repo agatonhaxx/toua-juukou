@@ -5,6 +5,7 @@
   fetchurl,
   undmg,
   dpkg,
+  pkgs,
   autoPatchelfHook,
   wrapGAppsHook3,
   gtk3,
@@ -71,6 +72,9 @@ stdenvNoCC.mkDerivation (
       gst_all_1.gst-plugins-bad
       gst_all_1.gst-plugins-ugly
       gst_all_1.gst-libav
+      # Ships libgstpipewire.so, which the GStreamer setup hook adds to the
+      # wrapper's plugin path; without it WebKit's autoaudiosink only has pulsesink.
+      pkgs.pipewire
     ];
 
     installPhase = ''
@@ -94,6 +98,9 @@ stdenvNoCC.mkDerivation (
       gappsWrapperArgs+=(
         --set-default FLOW_NODE "${lib.getExe nodejs}"
         --set-default FLOW_INTEGRITY_SCRIPT "$out/lib/Flow Beta/sidecar/integrity.cjs"
+        # autoaudiosink ranks sinks equally, so promote the native one: a default
+        # device change then relinks server-side instead of stalling pulsesink.
+        --set-default GST_PLUGIN_FEATURE_RANK "pipewiresink:MAX"
       )
     '';
 

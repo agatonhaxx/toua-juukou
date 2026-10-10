@@ -59,6 +59,7 @@
       blueman.enable = false;
       bluetooth.enable = false;
       chromium.enable = true;
+      discord.enable = true;
       firefox.enable = true;
       vscode.enable = true;
       wezterm.enable = true;
@@ -100,7 +101,14 @@
   };
 
   network.services = {
-    tailscale.enable = true;
+    tailscale = {
+      enable = true;
+
+      # Wall-e runs the control server, so that one address is what the whole
+      # fleet joins instead of Tailscale's own. Each host authenticates with its
+      # own preauth key in secrets/services/tailscale.yaml.
+      loginServer = "https://headscale.huxe.eu";
+    };
   };
 
   server.services = {

@@ -7,6 +7,7 @@ in
   homebrew.casks = mkEnabledPackages cfg {
     bitwarden = "bitwarden";
     chromium = "google-chrome";
+    discord = "discord";
     sf-symbols = "sf-symbols";
   };
   homebrew.brews = mkEnabledPackages cfg {

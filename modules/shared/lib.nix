@@ -95,6 +95,55 @@ let
         default = domain;
         description = "Domain name for the ${name} service";
       };
+
+      # Set on a host that fronts this service through its own nginx — wall-e
+      # fronting baymax's media services. The service itself is enabled where it
+      # runs, so the fronting host sets only `proxy` and `domain`.
+      proxy = mkOption {
+        type = types.nullOr (
+          types.submodule {
+            options = {
+              host = mkOption {
+                type = types.str;
+                example = "baymax";
+                description = "Host running the service, as the fronting nginx reaches it — a Tailscale MagicDNS name for another machine.";
+              };
+
+              access = mkOption {
+                type = types.enum [
+                  "public"
+                  "tailnet"
+                ];
+                default = "public";
+                description = "Who may reach the vhost: everyone, or only clients on the tailnet.";
+              };
+
+              # On by default because immich and jellyfin push updates over a
+              # websocket; for the services that do not, the headers are inert.
+              websockets = mkOption {
+                type = types.bool;
+                default = true;
+                description = "Pass Upgrade headers through the proxy.";
+              };
+
+              maxBodySize = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                example = "5g";
+                description = "nginx `client_max_body_size`; null keeps nginx's 1m default, which immich uploads exceed.";
+              };
+
+              extraConfig = mkOption {
+                type = types.lines;
+                default = "";
+                description = "Extra nginx directives for the vhost's `/` location.";
+              };
+            };
+          }
+        );
+        default = null;
+        description = "Front this service through the local nginx, named by `domain`.";
+      };
     };
 
   # A Radarr/Sonarr-style arr: HTTP service, data directory, `media` group and

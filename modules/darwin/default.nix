@@ -9,6 +9,7 @@
     ./preferences
     ./security.nix
     ./system.nix
+    ./tailscale.nix
     # keep-sorted end
   ];
 }

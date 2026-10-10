@@ -1,4 +1,26 @@
 {
+  lib,
+  ...
+}:
+let
+  domain = "huxe.eu";
+
+  # The media services wall-e fronts for tailnet clients only; nginx refuses
+  # every other source. The list is the services' own names, and each one's
+  # port comes from its module.
+  tailnetServices = [
+    # keep-sorted start
+    "navidrome"
+    "prowlarr"
+    "qbittorrent"
+    "radarr"
+    "sabnzbd"
+    "slskd"
+    "sonarr"
+    # keep-sorted end
+  ];
+in
+{
   imports = [
     ../../user
 
@@ -10,8 +32,47 @@
     # not pull graphical applications or media players into its closure.
     profiles.headless.enable = true;
 
-    domain = "huxe.eu";
+    inherit domain;
     email = "glenn@huxe.eu";
+
+    # Endpoints for the services on baymax, which wall-e reaches over Tailscale
+    # by its MagicDNS name. `enable` stays false: the services run on baymax and
+    # this host only fronts them. Every name needs a Cloudflare A/AAAA record
+    # pointing here before acme can issue its certificate.
+    services =
+      (lib.genAttrs tailnetServices (name: {
+        domain = "${name}.${domain}";
+
+        proxy = {
+          host = "baymax";
+          access = "tailnet";
+        };
+      }))
+      // {
+        # The tailnet's control server, and the reason every other entry here can
+        # be addressed as `baymax`: MagicDNS resolves that name for every node that
+        # joins. Selected here rather than in a group, because one host runs it.
+        # `${domain}` needs its own Cloudflare record too, like the rest.
+        headscale.enable = true;
+
+        # Public, for phones and televisions away from the tailnet.
+        immich = {
+          domain = "immich.${domain}";
+
+          proxy = {
+            host = "baymax";
+
+            # Originals and videos are uploaded through here, far past nginx's
+            # 1m default.
+            maxBodySize = "5g";
+          };
+        };
+
+        jellyfin = {
+          domain = "jellyfin.${domain}";
+          proxy.host = "baymax";
+        };
+      };
   };
 
   # These NixOS options default to true even without a desktop. They install

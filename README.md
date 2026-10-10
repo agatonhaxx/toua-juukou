@@ -148,6 +148,12 @@ Two enabled services on one host cannot hold the same port, so
 of 0 binds none of its own and is outside the check, which is how the services
 that only ever sit behind nginx are declared.
 
+`mkServiceOption` also declares `proxy`, which a host sets to front a service
+that runs on another machine through its own nginx. Wall-E serves the Baymax
+media services that way, so their `enable` stays false there and only their
+`domain` and `proxy` are set; `modules/nixos/services/proxy.nix` renders the
+vhosts and certificates from each service's own port.
+
 Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
 `toua.services.nginx.enable`. Vaultwarden also requires
 `toua.services.kanidm.enable` for SSO. These dependencies must be enabled
@@ -185,6 +191,10 @@ once with:
 sudo ssh-keygen -t ed25519 -N '' -f /etc/ssh/ssh_host_ed25519_key
 ```
 
+A new NixOS host also needs its `preauthkey-<host>` entry in
+`secrets/services/tailscale.yaml` before it can be built — see
+[Tailnet](#tailnet).
+
 ## Secrets
 
 ```text
@@ -200,6 +210,51 @@ just secrets-update                       # apply .sops.yaml recipients
 
 Never commit plaintext secrets. Keep an offline copy of the private age key
 matching the `eek` recipient in `.sops.yaml`.
+
+## Tailnet
+
+Wall-E runs [Headscale](https://headscale.net) as the tailnet's control server
+at `https://headscale.huxe.eu`, so the fleet does not depend on Tailscale's own
+coordination service, and serves its own DERP relay on UDP 3478 next to
+Tailscale's public ones. Inside the tailnet, MagicDNS resolves names under
+`tailnet.huxe.eu`, which is what lets Wall-E reach the Baymax services as
+`baymax`.
+
+`headscale.huxe.eu` needs a Cloudflare A/AAAA record pointing at Wall-E, and UDP
+3478 has to reach the box for the relay to be useful.
+
+Each NixOS host enrols itself with a reusable preauth key named after that host,
+so one key can be revoked without touching the others. Create the tailnet's user
+once and mint a key per host with the `headscale` command on Wall-E — its own
+`headscale --help` is the reference for the user and key subcommands — then store
+the key in `secrets/services/tailscale.yaml` as `preauthkey-<host>`:
+
+```sh
+headscale --help
+just secret secrets/services/tailscale.yaml
+```
+
+That file has to exist before a host that reads it can be built: sops-nix checks
+for its path during evaluation. A node keeps the control server it registered
+with, so a host still on Tailscale's own server logs out once before the switch
+that moves it:
+
+```sh
+sudo tailscale logout
+sudo nixos-rebuild switch
+```
+
+macOS is the exception, since nix-darwin's Tailscale module takes no login
+server and no auth key. Building that host prints the one manual command to run:
+
+```sh
+sudo tailscale logout
+sudo tailscale up --login-server=https://headscale.huxe.eu --auth-key=<preauthkey-mac>
+```
+
+Keep `/var/lib/headscale` backed up: `db.sqlite` holds the nodes, and
+`noise_private.key` and `derp_server_private.key` cannot be regenerated without
+re-enrolling every node.
 
 ## Add a Kanidm/SSO user
 
@@ -286,6 +341,7 @@ Service URLs:
 - Kanidm: `https://sso.huxe.eu`
 - Vaultwarden: `https://vault.huxe.eu`
 - Atuin: `https://atuin.huxe.eu`
+- Tailnet control server: `https://headscale.huxe.eu` (see [Tailnet](#tailnet))
 
 The media services run on Baymax and are reached over the LAN:
 
@@ -299,6 +355,15 @@ The media services run on Baymax and are reached over the LAN:
   `just secret secrets/services/slskd.yaml` to exist before it is enabled
 - Navidrome: `http://baymax:4533`
 - immich: `http://baymax:2283`
+
+They also have names under `huxe.eu`, which Wall-E serves by proxying over
+Tailscale: `https://immich.huxe.eu` and `https://jellyfin.huxe.eu` are public,
+and `https://<service>.huxe.eu` for the other seven is served only to clients on
+the tailnet. Each name needs a Cloudflare A/AAAA record pointing at Wall-E before
+ACME can issue its certificate. Two settings stay in a WebUI: Jellyfin needs
+Wall-E's tailnet address under *Known proxies* to see client addresses instead of
+the proxy's, and qBittorrent needs its own name allowed by the host-header
+validation above its port.
 
 They keep their state under `/data/baymax/qt` and share the libraries and
 download trees through the `media` group, which your user is in as well; the
