@@ -203,12 +203,18 @@ A new NixOS host also needs its `preauthkey-<host>` entry in
 ```text
 secrets/
 ├── eek.yaml                         personal secrets
-└── services/<service>.yaml          shared service secrets
+├── services/<service>.yaml          shared service secrets
+└── services/borg/<host>/            that host's Borg identity and passphrase
 ```
 
 ```sh
 just secret secrets/services/kanidm.yaml  # edit one secret
 just secrets-update                       # apply .sops.yaml recipients
+
+# The two files under services/borg/<host>/ are binary sops documents, so
+# `just secret` is the wrong tool for them — they are made by encrypting the
+# plain file, and read back the same way.
+sops -d --input-type binary --output-type binary secrets/services/borg/baymax/ssh-key.yaml
 ```
 
 Never commit plaintext secrets. Keep an offline copy of the private age key
@@ -308,8 +314,10 @@ Set `openRegistration` back to `false` and deploy Wall-E again immediately.
 
 ## Backups
 
-Borg jobs are not wired up yet — see [Known gaps](#known-gaps). This is the
-intended layout:
+One job runs: Baymax's `~/documents/personal` exports go to the repository
+Wall-E serves as `repos.baymax`. The rest of the layout below is the shape it
+should grow into, not something that is built — see
+[Known gaps](#known-gaps):
 
 ```text
 bender/mac/ponkotsu -> Wall-E -> locked repository mirrors on Baymax
@@ -322,7 +330,10 @@ Keep these offline:
 - every Borg repository passphrase;
 - `borg key export` from every initialized repository.
 
-The Borg SSH public keys authorize SSH only; they cannot decrypt a backup.
+The Borg SSH public keys authorize SSH only; they cannot decrypt a backup. A
+client's public key is `keys/borg/<host>.pub`, and its private half and the
+repository passphrase are the binary sops files under
+`secrets/services/borg/<host>/`.
 
 Useful checks on a host:
 
@@ -387,11 +398,10 @@ the rest.
 
 ## Known gaps
 
-- **Borg backups are not wired up.** `modules/nixos/services/borgbackup.nix`
-  implements jobs, mirrors and receiver repositories, but no host defines any,
-  so the module is inert. Wiring it up also needs `keys/borg/<name>.pub` to
-  exist and the `secrets/services/` rule in `.sops.yaml` to match the nested
-  `secrets/services/borg/<host>/…` paths the module expects.
+- **Borg backups cover one host.** `modules/nixos/services/borgbackup.nix` runs
+  the `personal` job in `hosts/baymax/default.nix` against `repos.baymax` on
+  Wall-E. The `bender`/`mac`/`ponkotsu` clients, the `mirrors` that would make
+  the copies 3-2-1, and Wall-E's own service repositories are not defined.
 - **Bitwarden SSH agent.** `user/eek/system/env.nix` still carries a `REPLACE-ME`
   socket path for the Bitwarden desktop agent on macOS.
 

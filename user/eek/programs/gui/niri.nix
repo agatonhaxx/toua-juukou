@@ -18,6 +18,11 @@ in
   # host's own value and conflict instead of losing to it.
   toua.programs.dms.enable = lib.mkIf niriEnabled true;
 
+  # The launcher the session runs is vicinae rather than DMS's spotlight, so its
+  # daemon comes up with niri the same way — the unit is in
+  # `modules/programs/gui/vicinae.nix`.
+  toua.programs.vicinae.enable = lib.mkIf niriEnabled true;
+
   # Wayland/Linux-only, gated on the same flag as the session: otherwise a Darwin
   # host pulls in `niri` and friends. gamescope is not here: it belongs
   # to the gaming group, whose system wrapper carries cap_sys_nice, and a plain
@@ -31,51 +36,26 @@ in
     with pkgs;
     [
       # keep-sorted start
-      brightnessctl # backlight control for dimming
-      labwc
-      playerctl # MPRIS media key control
-      wayshot # screenshot tool — Mod+Print's backend until DMS's own screenshot IPC is known
-      wl-clipboard # wl-copy/wl-paste: Mod+Print pipes a screenshot into the clipboard
-      xwayland-run
+      fcitx5
+      wl-clipboard # wl-copy/wl-paste: the wayland clipboard from a shell
       # keep-sorted end
     ]
   );
 
   xdg.configFile = lib.mkIf niriEnabled {
-    # Pull every window off the other monitors onto the focused one, bound to
-    # Mod+Alt+G; nothing can detect the TV going to standby, so it is a keypress.
-    "niri/gather-windows.sh" = {
-      text = ''
-        #!/bin/sh
-        set -eu
-
-        ws=$(niri msg --json workspaces)
-        here=$(printf '%s' "$ws" | jq -r '.[] | select(.is_focused) | .output')
-
-        # Every monitor keeps one empty workspace at the bottom, so the highest
-        # index is that one; gathering there lands everything on a fresh desktop.
-        target=$(printf '%s' "$ws" | jq -r --arg o "$here" '[.[] | select(.output == $o) | .idx] | max')
-        elsewhere=$(printf '%s' "$ws" | jq -c --arg o "$here" '[.[] | select(.output != $o) | .id]')
-
-        # By id, so the focus never moves, and one window at a time: niri only
-        # offers move-column-to-workspace for the focused column.
-        niri msg --json windows \
-          | jq -r --argjson ids "$elsewhere" '.[] | select(.workspace_id as $w | $ids | index($w)) | .id' \
-          | while read -r id; do
-              niri msg action move-window-to-workspace --window-id "$id" --focus false "$target" >/dev/null
-            done
-      '';
-      executable = true;
-    };
-
     "niri/config.kdl".text = ''
       // vim: ft=kdl
+
+      layout {
+          // You can tailor the gaps to fit dms spacing.
+          gaps 5
+      }
 
       input {
           keyboard {
               xkb {
                   layout "us,se,jp"
-                  options "grp:ctrl_space_toggle,caps:swapescape"
+                  options "grp:ctrl_space_toggle,caps:escape"
               }
           repeat-delay 300
           repeat-rate 35
@@ -91,6 +71,35 @@ in
           }
       }
 
+      window-rule {
+          match app-id=r#"^org\.gnome\."#
+          draw-border-with-background false
+          geometry-corner-radius 12
+          clip-to-geometry true
+      }
+
+      window-rule {
+          match app-id=r#"^org\.wezfurlong\.wezterm$"#
+          match app-id="zen"
+          draw-border-with-background false
+      }
+
+      window-rule {
+          match is-active=false
+          opacity 1.0
+      }
+
+      window-rule {
+          geometry-corner-radius 12
+          clip-to-geometry true
+      }
+
+      // Open DMS windows as floating by default (optional - DMS can manage this for you, see tip below)
+      window-rule {
+          match app-id=r#"^com\.danklinux\.dms$"#
+          open-floating true
+      }
+
       gestures {
         hot-corners {
           off
@@ -102,27 +111,30 @@ in
       spawn-at-startup "fcitx5"
 
       environment {
-          DISPLAY ":0"
+          XDG_CURRENT_DESKTOP "niri"
+          ELECTRON_OZONE_PLATFORM_HINT "auto"
           MOZ_ENABLE_WAYLAND "1"
           QT_QPA_PLATFORM "wayland;xcb"
           NIXOS_OZONE_WL "1"
           NO_AT_BRIDGE "1" // silence "AT-SPI: Error retrieving accessibility bus address" for GTK apps (blueman, Firefox, etc.)
       }
 
-      // Screenshot save path
-      screenshot-path "${config.home.homeDirectory}/Pictures/Screenshots/screenshot-%Y-%m-%d_%H-%M-%S.png"
-
       binds {
           // ── Launcher ──────────────────────────────────
           Mod+Return  { spawn "wezterm"; }
-          Mod+Space   { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
+          // Vicinae, not DMS's spotlight: the daemon holds the window and this
+          // only asks it to show. `vicinae` argues with nothing here — it has no
+          // global shortcut of its own, so this bind is the only way in.
+          Mod+Space   { spawn "vicinae" "toggle"; }
           Mod+Q       { close-window; }
           Mod+Slash   { show-hotkey-overlay; }
 
           // ── DankMaterialShell ────────────────────────
           // `dms ipc call <target> <function>`; targets and functions are listed
           // by `dms ipc list`. Where a key was free it is DMS's own preset, so
-          // its docs and this file agree.
+          // its docs and this file agree. Lock is the exception: its preset is
+          // Mod+Alt+L, which niri's directional monitor binds below need, so it
+          // sits one modifier away.
           Mod+V       { spawn "dms" "ipc" "call" "clipboard" "toggle"; }
           Mod+M       { spawn "dms" "ipc" "call" "processlist" "toggle"; }
           Mod+N       { spawn "dms" "ipc" "call" "notifications" "toggle"; }
@@ -130,7 +142,7 @@ in
           Mod+Comma   { spawn "dms" "ipc" "call" "settings" "toggle"; }
           Mod+X       { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
           Mod+Alt+N   { spawn "dms" "ipc" "call" "night" "toggle"; }
-          Mod+Alt+L   { spawn "dms" "ipc" "call" "lock" "lock"; }
+          Mod+Alt+Shift+L { spawn "dms" "ipc" "call" "lock" "lock"; }
 
           // Cycles the display profiles made in DMS's Display Config; this is
           // what kanshi's per-monitor profiles turned into.
@@ -169,18 +181,17 @@ in
 
           // ── Monitors ─────────────────────────────────
           // A second axis: J/K run out of desktops at the end of a monitor, so
-          // Alt is what steps between the monitors themselves.
-          Mod+Alt+H { focus-monitor-right; }
-          Mod+Alt+L { focus-monitor-left; }
+          // Alt is what steps between the monitors themselves. These actions are
+          // directional — they follow the physical arrangement rather than
+          // monitor order — so with the TV to the left of DP-3, H lands on the
+          // TV and L comes back.
+          Mod+Alt+H { focus-monitor-left; }
+          Mod+Alt+L { focus-monitor-right; }
 
           // Sending a thing across rather than looking across: the column
           // travels, matching Mod+Shift+H/L with Ctrl added for these keys.
-          Mod+Ctrl+Alt+H { move-column-to-monitor-right; }
-          Mod+Ctrl+Alt+L { move-column-to-monitor-left; }
-
-          // Nothing can watch for the TV dropping into standby: it holds the
-          // HDMI link up, so the output still reads as connected.
-          Mod+Alt+G { spawn "${config.xdg.configHome}/niri/gather-windows.sh"; }
+          Mod+Ctrl+Alt+H { move-column-to-monitor-left; }
+          Mod+Ctrl+Alt+L { move-column-to-monitor-right; }
 
           // ── Layout ───────────────────────────────────
           Mod+F    { fullscreen-window; }
@@ -188,20 +199,33 @@ in
           Mod+Shift+R { maximize-column; }
 
           // ── Screenshot ───────────────────────────────
-          Print           { screenshot; }
-          Shift+Print     { screenshot-screen; }
-          Mod+Print       { spawn-sh "wayshot --stdout | wl-copy"; }
+          // DMS's capture rather than niri's built-in actions: `dms screenshot`
+          // draws its own region selector and both writes the file and puts it
+          // on the clipboard, which is the two steps the wayshot pipe to wl-copy
+          // did by hand. The modes are subcommands, so `full` and `window` are
+          // there for the taking.
+          Print           { spawn "dms" "screenshot"; }
+          Shift+Print     { spawn "dms" "screenshot" "full"; }
+          Mod+Print       { spawn "dms" "screenshot" "--no-file"; }
 
           // ── Media keys ─────────────────────────────
-          XF86AudioRaiseVolume  { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; }
-          XF86AudioLowerVolume  { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
-          XF86AudioMute         { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-          XF86MonBrightnessUp   { spawn "brightnessctl" "set" "5%+"; }
-          XF86MonBrightnessDown { spawn "brightnessctl" "set" "5%-"; }
-          XF86AudioPlay         { spawn "playerctl" "--player=spotatui" "play-pause"; }
-          XF86AudioNext         { spawn "playerctl" "--player=spotatui" "next"; }
-          XF86AudioPrev         { spawn "playerctl" "--player=spotatui" "previous"; }
-          XF86PowerOff          { spawn "screenshot"; }
+          // All of these go through DMS rather than a helper binary: `audio`
+          // moves the default sink, `brightness` the device its own daemon is
+          // driving over DDC/backlight, and `mpris` acts on the player it holds
+          // as active. So no wpctl, brightnessctl or playerctl in the bind —
+          // and with the last two gone from `home.packages` above, nothing
+          // else here could call them anyway.
+          //
+          // The `--player=spotatui` pinning went with playerctl: which player
+          // these hit is now the pin in DMS's own Settings, under Media.
+          XF86AudioRaiseVolume  { spawn "dms" "ipc" "call" "audio" "increment" "5"; }
+          XF86AudioLowerVolume  { spawn "dms" "ipc" "call" "audio" "decrement" "5"; }
+          XF86AudioMute         { spawn "dms" "ipc" "call" "audio" "mute"; }
+          XF86MonBrightnessUp   { spawn "dms" "ipc" "call" "brightness" "increment" "5"; }
+          XF86MonBrightnessDown { spawn "dms" "ipc" "call" "brightness" "decrement" "5"; }
+          XF86AudioPlay         { spawn "dms" "ipc" "call" "mpris" "playPause"; }
+          XF86AudioNext         { spawn "dms" "ipc" "call" "mpris" "next"; }
+          XF86AudioPrev         { spawn "dms" "ipc" "call" "mpris" "previous"; }
       }
 
       // ── DankMaterialShell fragments ──────────────────
@@ -217,14 +241,17 @@ in
       //
       // `dms/binds.kdl` is left out: its preset would collide with the binds
       // above. So is `dms/input.kdl`, so that the xkb layouts in the `input`
-      // block stay the only definition of the keyboard.
+      // block stay the only definition of the keyboard. So is `dms/wpblur.kdl`:
+      // it only exists to place the blurred wallpaper layer within the backdrop,
+      // and blur is not wanted here. The two `place-within-backdrop` layer-rules
+      // it pairs with are gone from the `layer-rule` blocks above for the same
+      // reason.
       include optional=true "dms/alttab.kdl"
       include optional=true "dms/colors.kdl"
       include optional=true "dms/cursor.kdl"
       include optional=true "dms/layout.kdl"
       include optional=true "dms/outputs.kdl"
       include optional=true "dms/windowrules.kdl"
-      include optional=true "dms/wpblur.kdl"
     '';
   };
 }

@@ -49,6 +49,7 @@ in
         "dms"
         "kiwidesk"
         "niri"
+        "vicinae"
       ]
     );
     graphical.enable = mkEnableOption "graphical user settings";

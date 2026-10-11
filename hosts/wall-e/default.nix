@@ -95,6 +95,16 @@ in
           };
         };
     }
+
+    # One repository per client host, reached with a key of its own and
+    # restricted to that repository's directory, so a client can neither read
+    # another's backups nor write outside its own. The client end of the pair —
+    # the `personal` job — is declared where it runs, in
+    # hosts/baymax/default.nix; this host only serves the result, and
+    # `keys/borg/baymax.pub` is the key the job authenticates with.
+    {
+      services.borgbackup.repos.baymax = { };
+    }
   ];
 
   # These NixOS options default to true even without a desktop. They install

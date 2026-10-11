@@ -65,6 +65,13 @@ in
     # Shared by any graphical session: X11 for XWayland and X-only apps, and
     # PipeWire, whose pulse interface replaces pulseaudio.
     (lib.mkIf graphical {
+      # DDC/CI over the monitor's I2C bus: the shell drives external-monitor
+      # brightness straight off /dev/i2c-N, and ddcutil and i2c-tools read the
+      # same devices. The module loads i2c-dev and its udev rule hands them to
+      # whoever holds the seat, so no group membership is needed for a local
+      # session — the `i2c` group it also creates is for everyone else.
+      hardware.i2c.enable = true;
+
       services = {
         xserver = {
           enable = true;

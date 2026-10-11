@@ -6,6 +6,7 @@
     # share, so it is imported here and by the darwin side.
     ../services
     ./bluetooth.nix
+    ./chromium.nix
     ./desktop.nix
     ./gaming.nix
     ./options.nix

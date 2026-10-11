@@ -26,6 +26,17 @@ creation_rules:
           - *eek
           - *baymax
 
+  # The SSH identity a client's Borg job holds and the passphrase that opens its
+  # repository both belong on that one host, so a client gets a directory of its
+  # own rather than the `huxe` set. `*eek` is here to keep them editable from the
+  # identity itself. Above the `services/` rule because sops takes the first
+  # match, although that rule's `[^/]+` does not reach these nested paths either.
+  - path_regex: secrets/services/borg/baymax/
+    key_groups:
+      - age:
+          - *eek
+          - *baymax
+
   - path_regex: secrets/services/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age: *huxe

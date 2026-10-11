@@ -76,7 +76,6 @@ in
 
     {
       programs = {
-        blueman.enable = true;
         bluetooth.enable = true;
       };
 
@@ -114,6 +113,25 @@ in
 
           # What it offers on the Soulseek network; the unit sees it read-only.
           shares = [ "/data/baymax/music" ];
+        };
+      };
+    }
+
+    # The desktop's own data rather than the media it serves: the folders under
+    # ~/documents/personal are exported by hand from the apps that own them, and
+    # this repository is the only copy of them that is not this machine.
+    #
+    # Nothing enables the module for a client host — the `server` group is what
+    # turns it on, and that group is wall-e's — so the switch and the job are
+    # both stated here. Wall-e serves the repository as `repos.baymax`, and
+    # `keys/borg/baymax.pub` is the public half of the identity this job holds.
+    {
+      services.borgbackup = {
+        enable = true;
+
+        jobs.personal = {
+          repo = "borg@wall-e:.";
+          paths = [ "/home/eek/documents/personal" ];
         };
       };
     }

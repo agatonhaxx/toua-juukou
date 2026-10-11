@@ -16,6 +16,17 @@ in
   programs.chromium = lib.mkIf config.programs.chromium.enable {
     nativeMessagingHosts = [ pkgs.ff2mpv-rust ];
 
+    # Pinned CRX files from pkgs/chromium-extensions.nix: ungoogled-chromium
+    # does not install from the Web Store the way Chrome does, and Chromium
+    # checks `version` against the version inside the CRX. Proprietary Chrome on
+    # macOS installs store extensions only, hence the guard.
+    extensions = lib.mkIf (!isDarwin) (
+      lib.mapAttrsToList (_: ext: {
+        inherit (ext) id version;
+        crxPath = "${ext.crx}";
+      }) pkgs.chromium-extensions
+    );
+
     package = lib.mkIf (!isDarwin) (
       pkgs.ungoogled-chromium.override {
         enableWideVine = true;
@@ -24,10 +35,7 @@ in
         # https://github.com/secureblue/secureblue/blob/e500f078efc5748d5033a881bbbcdcd2de95a813/files/system/usr/etc/chromium/chromium.conf.md
         commandLineArgs = concatLists [
           # Aesthetics
-          [
-            "--gtk-version=4"
-            "--vertical-tabs"
-          ]
+          [ "--gtk-version=4" ]
 
           # Performance
           [
@@ -93,6 +101,13 @@ in
 
           [
             (features "enable" [
+              # The vertical tab strip on the left. Chromium has no policy or
+              # switch for it — the mode is a preference — so this feature is
+              # the declarative half; the tab strip's context menu ("Show tabs
+              # vertically") is what sets the preference, and it then lives in
+              # the profile.
+              "VerticalTabs"
+
               # needed for wayland
               "UseOzonePlatform"
 

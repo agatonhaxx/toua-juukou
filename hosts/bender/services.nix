@@ -42,9 +42,6 @@
       };
     };
 
-    # Tray applet for the Bluetooth radio enabled in default.nix.
-    blueman.enable = true;
-
     openssh = {
       generateHostKeys = true;
       enable = true;
