@@ -14,7 +14,20 @@ in
       niri.enable = mkEnableOption "Register the niri session";
     };
 
-    displayManager.gdm.enable = mkEnableOption "Enable the GDM display manager";
+    displayManager.greeter = mkOption {
+      type = types.enum [
+        "gdm"
+        "dms"
+      ];
+      default = "gdm";
+      description = ''
+        Which greeter asks for the login: GDM (GNOME's) or DankMaterialShell's
+        greetd greeter.
+
+        An enum rather than two toggles because a host runs one display manager
+        and never two, so this cannot be set to an impossible pair.
+      '';
+    };
 
     # Only NixOS acts on this: ACME uses it as the contact address.
     # Required when toua.services.acme.enable is true; otherwise it may be null.

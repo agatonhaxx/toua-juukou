@@ -1,3 +1,7 @@
+# Frozen copy of `user/eek/programs/gui/kanshi.nix` as it stood on 2026-10-11,
+# when DMS's Display Config took over the outputs and kanshi was retired. The
+# profiles below — the monitor criteria strings in particular, which cost an
+# evening with `niri msg outputs` to get right — are what to re-enter there.
 {
   lib,
   config,

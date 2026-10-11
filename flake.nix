@@ -44,6 +44,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     darwin-custom-icons.url = "github:ryanccn/nix-darwin-custom-icons";
     darwin-login-items.url = "github:uncenter/nix-darwin-login-items";
 

@@ -21,8 +21,29 @@ in
       };
     }
 
-    (lib.mkIf cfg.displayManager.gdm.enable {
+    (lib.mkIf (cfg.displayManager.greeter == "gdm") {
       services.displayManager.gdm.enable = true;
+    })
+
+    (lib.mkIf (cfg.displayManager.greeter == "dms") {
+      services.displayManager.dms-greeter = {
+        enable = true;
+
+        # The greeter is a quickshell running in its own compositor, and the
+        # module asserts that this one is enabled system-wide: home-manager's
+        # niri does not count, which is why `toua.desktop.niri.enable` — not
+        # `toua.programs.niri.enable` — is what has to be on here.
+        compositor.name = "niri";
+
+        # Copy the user's DankMaterialShell settings, colors and wallpaper into
+        # the greeter's own directory at each start, so the login screen wears
+        # the same theme as the session it is about to open.
+        configHome = config.users.users.${cfg.primaryUser}.home;
+
+        # A greeter that fails is a machine with no way in, and it runs before
+        # there is a session to read the journal from.
+        logs.save = true;
+      };
     })
 
     (lib.mkIf cfg.desktop.gnome.enable {

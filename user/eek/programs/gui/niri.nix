@@ -9,257 +9,31 @@ let
 in
 {
   # Wayland/Linux-only, gated on the same flag as the session: otherwise a Darwin
-  # host pulls in `niri`, `swaybg` and friends. gamescope is not here: it belongs
+  # host pulls in `niri` and friends. gamescope is not here: it belongs
   # to the gaming group, whose system wrapper carries cap_sys_nice, and a plain
   # package in this earlier PATH entry would shadow it.
+  #
+  # The bar, the notification daemon, idle/lock timers, clipboard history and the
+  # wallpaper are DankMaterialShell's now — see ./dms.nix — so waybar, mako,
+  # swayidle, fuzzel, cliphist and swaybg are gone from this list.
   home.packages = lib.mkIf niriEnabled (
     with pkgs;
     [
       # keep-sorted start
       brightnessctl # backlight control for dimming
-      cliphist # clipboard history
-      fuzzel # Wayland-native app launcher
       labwc
-      mako # notification daemon
       networkmanagerapplet
       pavucontrol # volume control
       playerctl # MPRIS media key control
-      swaybg # wallpaper daemon
-      swayidle # idle management (dim + lock)
       wayshot # screenshot tool
+      wl-clipboard # wl-copy/wl-paste: Mod+Print pipes a screenshot into the clipboard
       wlogout # styled logout menu
       xwayland-run
       # keep-sorted end
     ]
   );
 
-  programs.waybar = lib.mkIf niriEnabled {
-    enable = true;
-    settings = {
-      mainBar = {
-        layer = "top";
-        position = "top";
-        height = 30;
-        modules-left = [
-          "niri/workspaces"
-          "niri/window"
-        ];
-        modules-center = [ "clock" ];
-        modules-right = [
-          "custom/kbdlayout"
-          "pulseaudio"
-          "cpu"
-          "memory"
-          "network"
-          "tray"
-        ];
-
-        "niri/workspaces" = {
-          format = "{icon}";
-          format-icons = {
-            "1" = "1";
-            "2" = "2";
-            "3" = "3";
-            "4" = "4";
-          };
-        };
-        "niri/window" = {
-          format = "{title}";
-          max-length = 80;
-        };
-        clock = {
-          format = "{:%A, %d %b %H:%M}";
-          tooltip-format = "<tt>{calendar}</tt>";
-        };
-        pulseaudio = {
-          format = "{icon}  {volume}%";
-          format-muted = "";
-          on-click-right = "pavucontrol";
-          format-icons = {
-            default = [
-              ""
-              "󰕾"
-              ""
-            ];
-          };
-        };
-        network = {
-          format-wifi = "󰖩  {signalStrength}%";
-          on-click-right = "networkmanagerapplet";
-          format-ethernet = "  {ifname}";
-          format-disconnected = "󱚵 ";
-        };
-        cpu = {
-          format = "  {usage}%";
-        };
-        memory = {
-          format = "  {}%";
-        };
-        tray = {
-          spacing = 20;
-        };
-        "custom/kbdlayout" = {
-          exec = "${config.xdg.configHome}/waybar/kbdlayout.sh";
-          exec-if = "niri msg keyboard-layouts >/dev/null 2>&1";
-          interval = 1;
-          format = " {}";
-          tooltip-format = "Keyboard layout — click to cycle";
-        };
-      };
-    };
-    style = ''
-      * {
-        font-family: "FiraCode Nerd Font", monospace;
-        font-size: 13px;
-        border: none;
-        border-radius: 0;
-      }
-
-      window#waybar {
-        background-color: #1e1e2e;
-        color: #cdd6f4;
-      }
-
-      #workspaces button {
-        color: #6c7086;
-        padding: 0 6px;
-      }
-      #workspaces button.active {
-        color: #cdd6f4;
-        border-bottom: 2px solid #cba6f7;
-      }
-      #workspaces button.urgent {
-        color: #f38ba8;
-      }
-
-      #window {
-        color: #a6adc8;
-        padding: 0 10px;
-      }
-
-      #clock {
-        color: #89b4fa;
-        font-weight: bold;
-      }
-
-      #pulseaudio,
-      #network,
-      #cpu,
-      #memory,
-      #tray {
-        color: #a6adc8;
-        padding: 0 8px;
-      }
-
-      #pulseaudio.muted {
-        color: #f38ba8;
-      }
-
-      #network.disconnected {
-        color: #f38ba8;
-      }
-
-      #custom-kbdlayout {
-        color: #a6adc8;
-        padding: 0 8px;
-      }
-
-      tooltip {
-        background: #313244;
-        border: 1px solid #45475a;
-      }
-      tooltip label {
-        color: #cdd6f4;
-      }
-    '';
-  };
-
   xdg.configFile = lib.mkIf niriEnabled {
-    # Keyboard layout indicator — parses niri msg keyboard-layouts
-    "waybar/kbdlayout.sh" = {
-      text = ''
-        #!/bin/sh
-        niri msg keyboard-layouts 2>/dev/null | awk '
-          /^ \*/ {
-            sub(/^ \*[ \t]*[0-9]+[ \t]*/, "")
-            name = $0
-            if (name ~ /English/)       print "EN"
-            else if (name ~ /Swedish/)  print "SE"
-            else if (name ~ /Japanese/) print "あ"
-            else                        print substr(name, 1, 2)
-            exit
-          }
-        '
-      '';
-      executable = true;
-    };
-
-    # Cycle to next keyboard layout — used by waybar on-click
-    "waybar/kbdlayout-cycle.sh" = {
-      text = ''
-        #!/bin/sh
-        # Get the number of layouts and current index, then cycle
-        total=$(niri msg keyboard-layouts 2>/dev/null | grep -c '^[ *]')
-        cur=$(niri msg keyboard-layouts 2>/dev/null | awk '/^ \*/ { print $2; exit }')
-        if [ -n "$total" ] && [ -n "$cur" ]; then
-          next=$(( (cur + 1) % total ))
-          niri msg action switch-layout "$next"
-        fi
-      '';
-      executable = true;
-    };
-
-    "fuzzel/fuzzel.ini".text = ''
-      [main]
-      font=FiraCode Nerd Font:size=18
-      width=60
-      dpi-aware=no
-      lines=12
-      horizontal-pad=30
-      vertical-pad=30
-      inner-pad=15
-
-      [colors]
-      background=1e1e2eff
-      text=cdd6f4ff
-      match=cba6f7ff
-      selection=585b70ff
-      selection-text=cdd6f4ff
-      selection-match=cba6f7ff
-      border=cba6f7ff
-    '';
-
-    # Mako notification daemon — Catppuccin Mocha theme + bluetooth filter
-    "mako/config".text = ''
-      # ── Global ──────────────────────────────────────
-      sort=-time
-      layer=overlay
-      anchor=top-right
-      font="FiraCode Nerd Font" 12
-      width=400
-      height=150
-      margin=8
-      padding=16
-      border-size=2
-      border-radius=8
-      default-timeout=5000
-      max-visible=5
-      ignore-timeout=1
-
-      # ── Colors (Catppuccin Mocha) ──────────────────
-      background-color=#1e1e2eff
-      text-color=#cdd6f4ff
-      border-color=#cba6f7ff
-      progress-color=over #89b4faff
-
-      # ── Dismiss on right-click ─────────────────────
-      on-button-right=dismiss
-
-      # ── Ignore bluetooth/blueman notifications ─────
-      [app-name=.blueman-applet-wrapped]
-      invisible
-    '';
-
     # Pull every window off the other monitors onto the focused one, bound to
     # Mod+Alt+G; nothing can detect the TV going to standby, so it is a keypress.
     "niri/gather-windows.sh" = {
@@ -309,28 +83,15 @@ in
           }
       }
 
-      // Monitors are kanshi's job, not this file's — see services.kanshi in
-      // ./kanshi.nix.
-
       gestures {
         hot-corners {
           off
         }
       }
-      // Spawn essential services at startup
-      spawn-at-startup "waybar"
-      // A random wallpaper per login from ~/dev/eek/wallpapers, skipping .git so
-      // swaybg is never handed a file out of it; meant to become a flake input.
-      spawn-sh-at-startup "swaybg -i \"$(find ${config.home.homeDirectory}/dev/eek/wallpapers -type f -not -path '*/.git/*' | shuf -n1)\""
-      spawn-at-startup "fcitx5"
-      // Idle management: dim after 15 min, lock (GDM) after 30 min
-      spawn-at-startup "swayidle" "timeout" "900" "brightnessctl set 30%" "resume" "brightnessctl set 100%" "timeout" "1800" "loginctl lock-session"
-      // Notification daemon
-      spawn-at-startup "mako"
 
-      // Clipboard history
-      spawn-sh-at-startup "wl-paste --type text --watch cliphist store"
-      spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
+      // Spawn essential services at startup. DMS is not among them: its systemd
+      // unit comes up with niri's own target — see ./dms.nix.
+      spawn-at-startup "fcitx5"
 
       environment {
           DISPLAY ":0"
@@ -346,9 +107,29 @@ in
       binds {
           // ── Launcher ──────────────────────────────────
           Mod+Return  { spawn "wezterm"; }
-          Mod+Space  { spawn "fuzzel"; }
+          Mod+Space   { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
           Mod+Q       { close-window; }
           Mod+Slash   { show-hotkey-overlay; }
+
+          // ── DankMaterialShell ────────────────────────
+          // `dms ipc call <target> <function>`; targets and functions are listed
+          // by `dms ipc list`. Where a key was free it is DMS's own preset, so
+          // its docs and this file agree.
+          Mod+V       { spawn "dms" "ipc" "call" "clipboard" "toggle"; }
+          Mod+M       { spawn "dms" "ipc" "call" "processlist" "toggle"; }
+          Mod+N       { spawn "dms" "ipc" "call" "notifications" "toggle"; }
+          Mod+Shift+N { spawn "dms" "ipc" "call" "notepad" "toggle"; }
+          Mod+Comma   { spawn "dms" "ipc" "call" "settings" "toggle"; }
+          Mod+X       { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
+          Mod+Alt+N   { spawn "dms" "ipc" "call" "night" "toggle"; }
+          Mod+Alt+L   { spawn "dms" "ipc" "call" "lock" "lock"; }
+
+          // Cycles the display profiles made in DMS's Display Config; this is
+          // what kanshi's per-monitor profiles turned into.
+          Mod+P       { spawn "dms" "ipc" "call" "outputs" "cycleProfile"; }
+
+          // Blanks the panels without locking, for stepping away briefly.
+          Mod+Shift+P { power-off-monitors; }
 
           // ── Focus (vim-style hjkl) ───────────────────
           // H/L cross columns, which run horizontally. J/K cross workspaces,
@@ -415,48 +196,30 @@ in
           XF86PowerOff          { spawn "screenshot"; }
 
           // ── Session ──────────────────────────────────
-          Mod+B       { spawn-sh "pkill waybar || waybar &"; }
           Mod+Shift+Q { spawn "wlogout"; }
       }
 
-      layout {
-          gaps 4
-          default-column-width { proportion 0.5; }
-          focus-ring {
-              width 2
-              active-color "#cba6f7"
-              inactive-color "#45475a"
-          }
-          border {
-              width 1
-              active-color "#cba6f7"
-              inactive-color "#313244"
-          }
-      }
-
-      cursor {
-          xcursor-theme "Adwaita"
-          hide-when-typing true
-      }
-
-      // ── Window rules ─────────────────────────────────
-      window-rule {
-          match app-id="^firefox$"
-          open-maximized true
-      }
-
-      window-rule {
-          match title=r#".*Bitwarden.*"#
-          open-floating true
-
-          default-column-width { fixed 450; }
-          default-window-height { fixed 700; }
-      }
-
-      window-rule {
-          match app-id="^org.gnome.Nautilus$"
-          open-maximized true
-      }
+      // ── DankMaterialShell fragments ──────────────────
+      // DMS writes these itself — `dms setup <name>` for upstream defaults, then
+      // its Settings UI. They are deliberately not in the nix store: DMS has to
+      // be able to write them, so they are the GUI's state, not this file's.
+      // `optional=true` because niri refuses to start on a missing include, and
+      // the first login happens before DMS has written any of them.
+      //
+      // Included last on purpose: a later include wins, so the Layout, Cursor,
+      // Window Rules and Display Config tabs are the source of truth for what
+      // they own — monitors included, which is how kanshi was retired.
+      //
+      // `dms/binds.kdl` is left out: its preset would collide with the binds
+      // above. So is `dms/input.kdl`, so that the xkb layouts in the `input`
+      // block stay the only definition of the keyboard.
+      include optional=true "dms/alttab.kdl"
+      include optional=true "dms/colors.kdl"
+      include optional=true "dms/cursor.kdl"
+      include optional=true "dms/layout.kdl"
+      include optional=true "dms/outputs.kdl"
+      include optional=true "dms/windowrules.kdl"
+      include optional=true "dms/wpblur.kdl"
     '';
   };
 }

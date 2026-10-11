@@ -67,10 +67,11 @@ in
     (mkDefaults groups.dev)
     (mkDefaults groups.agents)
     (mkDefaults {
+      programs.dms.enable = true;
       programs.niri.enable = true;
       desktop.gnome.enable = true;
       desktop.niri.enable = true;
-      displayManager.gdm.enable = true;
+      displayManager.greeter = "dms";
     })
 
     {

@@ -22,10 +22,11 @@ in
     (mkDefaults { inherit (groups.media) programs; })
     (mkDefaults groups.network)
     (mkDefaults {
+      programs.dms.enable = true;
       programs.niri.enable = true;
       desktop.gnome.enable = true;
       desktop.niri.enable = true;
-      displayManager.gdm.enable = true;
+      displayManager.greeter = "dms";
     })
 
     # gamescope used to come in with niri's package list; the gaming group owns

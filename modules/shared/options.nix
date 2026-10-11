@@ -46,6 +46,7 @@ in
     programs = mkEnableOptions (
       programNames
       ++ [
+        "dms"
         "kiwidesk"
         "niri"
       ]
