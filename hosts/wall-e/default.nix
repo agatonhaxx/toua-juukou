@@ -43,11 +43,12 @@ in
       email = "glenn@huxe.eu";
 
       # Endpoints for the services on baymax, which wall-e reaches over Tailscale
-      # by its MagicDNS name. `enable` stays false: the services run on baymax and
-      # this host only fronts them. Only a name someone off the tailnet has to
-      # resolve needs a Cloudflare A/AAAA record pointing here, and acme's DNS-01
-      # challenge needs none: the seven tailnet-only names below have no public
-      # record at all, and the two public ones are the only entries that do.
+      # by its MagicDNS name, plus radicale, which runs here: `enable` is stated
+      # where a service runs, and the host that fronts one states its `domain`
+      # and `proxy`. Only a name someone off the tailnet has to resolve needs a
+      # Cloudflare A/AAAA record pointing here, and acme's DNS-01 challenge needs
+      # none: the eight tailnet-only names have no public record at all, and the
+      # two public ones are the only entries that do.
       services =
         (lib.genAttrs tailnetServices (name: {
           # headscale's `baseDomain`.
@@ -92,6 +93,15 @@ in
           jellyfin = {
             domain = "stream.${domain}";
             proxy.host = "baymax";
+          };
+
+          # Radicale serves the tailnet's calendars and contacts. It runs on this
+          # host rather than on baymax, so its backend is loopback — the same
+          # `proxy` entry the names above use, which is what gets it the
+          # tailnet-only source check, the certificate and the MagicDNS record.
+          radicale.proxy = {
+            host = "127.0.0.1";
+            access = "tailnet";
           };
         };
     }

@@ -97,8 +97,10 @@ let
       };
 
       # Set on a host that fronts this service through its own nginx — wall-e
-      # fronting baymax's media services. The service itself is enabled where it
-      # runs, so the fronting host sets only `proxy` and `domain`.
+      # fronting baymax's media services, or fronting a service that runs on
+      # wall-e itself, whose backend is then loopback. The service itself is
+      # enabled where it runs, so a host fronting another machine's service sets
+      # only `proxy` and `domain`.
       proxy = mkOption {
         type = types.nullOr (
           types.submodule {
@@ -106,7 +108,7 @@ let
               host = mkOption {
                 type = types.str;
                 example = "baymax";
-                description = "Host running the service, as the fronting nginx reaches it — a Tailscale MagicDNS name for another machine.";
+                description = "Host running the service, as the fronting nginx reaches it — a Tailscale MagicDNS name for another machine, or `127.0.0.1` for one on the fronting host itself.";
               };
 
               access = mkOption {

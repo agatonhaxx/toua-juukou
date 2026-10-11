@@ -151,12 +151,14 @@ of 0 binds none of its own and is outside the check, which is how the services
 that only ever sit behind nginx are declared.
 
 `mkServiceOption` also declares `proxy`, which a host sets to front a service
-that runs on another machine through its own nginx. Wall-E serves the Baymax
-media services that way, so their `enable` stays false there and only their
-`domain` and `proxy` are set; `modules/nixos/services/proxy.nix` renders the
-vhosts and certificates from each service's own port.
+through its own nginx. Wall-E serves the Baymax media services that way, so their
+`enable` stays false there and only their `domain` and `proxy` are set; Radicale
+runs on Wall-E itself and is fronted the same way, with `proxy.host` at loopback.
+`modules/nixos/services/proxy.nix` renders the vhosts and certificates from each
+service's own port, and the tailnet-only source check from the `access` its
+`proxy` carries.
 
-Atuin, Kanidm, and Vaultwarden require `toua.services.acme.enable` and
+Atuin, Kanidm, Radicale, and Vaultwarden require `toua.services.acme.enable` and
 `toua.services.nginx.enable`. Vaultwarden also requires
 `toua.services.kanidm.enable` for SSO. These dependencies must be enabled
 explicitly, as the `server` group does; missing dependencies fail assertions.
@@ -312,6 +314,24 @@ atuin key   # save this somewhere safe
 
 Set `openRegistration` back to `false` and deploy Wall-E again immediately.
 
+## Add a calendar user
+
+Radicale authenticates against the bcrypt htpasswd file held in
+`secrets/services/radicale.yaml` under `htpasswd`; there is no user database and
+no registration. Append a line per user — `htpasswd -nB` prints one without
+putting the password into your shell history:
+
+```sh
+nix shell nixpkgs#apacheHttpd -c htpasswd -nB USER
+just secret secrets/services/radicale.yaml
+just deploy wall-e root@wall-e
+```
+
+The file is re-read on every authentication, so a rotation needs no restart and
+leaves the collections in `/var/lib/radicale/collections` alone. Clients point at
+`https://dav.local.huxe.eu` while on the tailnet, where the collection UI is at
+`/.web/`.
+
 ## Backups
 
 One job runs: Baymax's `~/documents/personal` exports go to the repository
@@ -357,6 +377,8 @@ Service URLs:
 - Kanidm: `https://sso.huxe.eu`
 - Vaultwarden: `https://vault.huxe.eu`
 - Atuin: `https://atuin.huxe.eu`
+- CalDAV and CardDAV: `https://dav.local.huxe.eu`, tailnet only — Radicale, with
+  its collection UI at `/.web/`
 - Tailnet control server: `https://headscale.huxe.eu` (see [Tailnet](#tailnet))
 
 The media services run on Baymax and are reached over the LAN:
@@ -372,13 +394,15 @@ The media services run on Baymax and are reached over the LAN:
 - Navidrome: `http://baymax:4533`
 - immich: `http://baymax:2283`
 
-Wall-E serves names for them by proxying over Tailscale. `https://pics.huxe.eu`
-and `https://stream.huxe.eu` are public and need a Cloudflare A/AAAA record
-pointing at Wall-E. The other seven are named under `local.huxe.eu` instead —
-`https://radarr.local.huxe.eu`, for instance — and served only to clients on the
-tailnet: MagicDNS resolves them through headscale, so they need no public
-record, and nginx refuses every other source. Certificates come from the
-Cloudflare DNS challenge in both cases, so no A record is needed to issue one.
+Wall-E serves names for them by proxying over Tailscale, and serves Radicale the
+same way, though that one runs on Wall-E itself. `https://pics.huxe.eu` and
+`https://stream.huxe.eu` are public and need a Cloudflare A/AAAA record pointing
+at Wall-E. The other eight are named under `local.huxe.eu` instead —
+`https://radarr.local.huxe.eu` and `https://dav.local.huxe.eu`, for instance —
+and served only to clients on the tailnet: MagicDNS resolves them through
+headscale, so they need no public record, and nginx refuses every other source.
+Certificates come from the Cloudflare DNS challenge in both cases, so no A record
+is needed to issue one.
 Two settings stay in a WebUI: Jellyfin needs
 Wall-E's tailnet address under *Known proxies* to see client addresses instead of
 the proxy's, and qBittorrent needs its own name allowed by the host-header

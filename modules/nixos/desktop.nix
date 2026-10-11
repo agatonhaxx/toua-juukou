@@ -21,11 +21,16 @@ in
       };
     }
 
-    (lib.mkIf (cfg.displayManager.greeter == "gdm") {
+    # A greeter exists only to hand a session to someone, so it belongs to having
+    # one. Without the `graphical` half a headless host takes the `"gdm"` default
+    # and runs GDM, which nothing there can log in to and which, through
+    # `services.graphical-desktop`, turns the `xdg` data back on that wall-e sets
+    # false — a conflict the option cannot resolve on its own.
+    (lib.mkIf (graphical && cfg.displayManager.greeter == "gdm") {
       services.displayManager.gdm.enable = true;
     })
 
-    (lib.mkIf (cfg.displayManager.greeter == "dms") {
+    (lib.mkIf (graphical && cfg.displayManager.greeter == "dms") {
       services.displayManager.dms-greeter = {
         enable = true;
 

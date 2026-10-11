@@ -131,6 +131,7 @@
     borgbackup.enable = true;
     kanidm.enable = true;
     nginx.enable = true;
+    radicale.enable = true;
     vaultwarden.enable = true;
     # keep-sorted end
   };

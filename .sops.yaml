@@ -18,13 +18,18 @@ creation_rules:
       - age: *huxe
 
   # slskd runs on baymax alone, so its secret is kept off the other hosts. This
-  # rule precedes the `services/` rule below because sops takes the first match,
-  # and that rule does not list baymax.
   - path_regex: secrets/services/slskd\.(yaml|json|env|ini)$
     key_groups:
       - age:
           - *eek
           - *baymax
+
+  # radicale runs on baymax alone, so its secret is kept off the other hosts.
+  - path_regex: secrets/services/radiacle\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *eek
+          - *wall-e
 
   # The SSH identity a client's Borg job holds and the passphrase that opens its
   # repository both belong on that one host, so a client gets a directory of its
