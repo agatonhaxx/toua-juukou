@@ -195,6 +195,37 @@ secrets-rotate:
       "${sops[@]}" rotate -i "$path"
     done < <(find secrets -type f -name '*.yaml' -print0)
 
+# Backup
+
+# Run one host's backup job now, and show what it did: just borg-backup personal
+[group("backup")]
+borg-backup job:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    unit="borgbackup-job-{{ job }}"
+    sudo systemctl start "$unit"
+    result=$(systemctl show "$unit" -p Result --value)
+    sudo journalctl -u "$unit" -n 40 --no-pager
+    [ "$result" = success ] || { echo "$unit: $result" >&2; exit 1; }
+
+# List what the repository holds, or one archive's files: just borg-list personal ::ARCHIVE --short
+[group("backup")]
+borg-list job *args:
+    exec borg-job "{{ job }}" list {{ args }}
+
+# Extract an archive to a directory, or into / to overwrite in place: just borg-restore personal
+[group("backup")]
+borg-restore job archive="" dest="/var/tmp/borg-restore" *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    archive="{{ archive }}"
+    if [ -z "$archive" ]; then
+      archive=$(borg-job "{{ job }}" list --last 1 --format '{archive}')
+    fi
+    mkdir -p "{{ dest }}"
+    cd "{{ dest }}"
+    exec borg-job "{{ job }}" extract "::$archive" {{ args }}
+
 # Store maintenance
 
 alias fix := repair

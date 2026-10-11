@@ -82,9 +82,9 @@ in
       # `qt.platformTheme.name` already selects.
       #
       # The unversioned variable is `mkDefault` on purpose: home-manager's qt
-      # module assigns it plainly from `qt.platformTheme.name`, already "qt5ct"
-      # here via the catppuccin qt5ct settings, and two plain definitions of one
-      # key are a conflict rather than an override.
+      # module assigns it plainly from `qt.platformTheme.name`, which is "qtct"
+      # here and maps to "qt5ct" through that module's `styleNames`, and two
+      # plain definitions of one key are a conflict rather than an override.
       home.sessionVariables = lib.mkIf config.toua.programs.dms.enable {
         QT_QPA_PLATFORMTHEME = lib.mkDefault "gtk3";
         QT_QPA_PLATFORMTHEME_QT6 = "gtk3";

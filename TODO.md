@@ -1,11 +1,5 @@
 # TODO
 
-## Personal
-
-- create the Borg key and the two sops secrets the `personal` job needs, then
-  the `~/documents/personal` backup runs on its own — see
-  `hosts/baymax/default.nix`
-
 ## Repo review leftovers
 
 Lower-priority findings from a repo audit, not yet acted on. See

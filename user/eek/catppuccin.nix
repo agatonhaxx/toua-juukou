@@ -52,14 +52,18 @@ in
     # qt5ct is not available on Darwin. The app gate also keeps Qt and its
     # configuration tools out of headless Linux hosts.
     (mkIf (pkgs.stdenv.hostPlatform.isLinux && config.toua.graphical.enable) {
-      catppuccin = {
-        # Kvantum conflicts with qt5ct: it requires `qt.style.name = "kvantum"`.
-        qt5ct.enable = true;
-        kvantum.enable = false;
-      };
+      # Qt's appearance belongs to DMS: it rewrites ~/.config/qt5ct/qt5ct.conf
+      # and qt6ct/qt6ct.conf on every shell start (SettingsData.updateQtIconTheme)
+      # and whenever it applies its Qt colors (scripts/qt.sh), each write a
+      # `sed -i` that replaces home-manager's read-only symlink with a plain file.
+      # So no `qt.qt5ctSettings`/`qt6ctSettings` here — those are precisely the
+      # two paths. Kvantum stays off rather than swap in another Qt theme engine.
+      catppuccin.kvantum.enable = false;
 
       qt = {
         enable = true;
+        # Keeps qt5ct/qt6ct installed and exports QT_QPA_PLATFORMTHEME=qt5ct,
+        # the check DMS's Qt script runs before touching either file.
         platformTheme.name = "qtct";
       };
     })

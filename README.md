@@ -363,6 +363,29 @@ systemctl status borgbackup-job-NAME
 journalctl -u borgbackup-job-NAME
 ```
 
+Restore from the host whose job holds the archive: the job's unit carries the
+repository, the SSH identity and the passphrase command, so `just` reads them
+from there rather than restating any of it. The `borg-job` command underneath
+does the same and works by hand — it is installed from
+`user/eek/scripts/borg-job.sh` as `~/.local/bin/borg-job`:
+
+```sh
+just borg-backup personal                    # run the job now, then show its log
+just borg-list personal                      # what the repository holds
+just borg-list personal --last 3 --short     # the three newest archives
+just borg-list personal ::ARCHIVE --short    # the files inside one archive
+just borg-restore personal                   # newest archive into /var/tmp/borg-restore
+just borg-restore personal ::ARCHIVE ~/out   # one archive into ~/out
+just borg-restore personal "" /              # newest archive, back in place
+```
+
+`borg-restore` extracts and leaves the files to look at; naming `/` as the
+directory is what puts them back where they came from, and it overwrites what is
+there. Naming paths after the arguments restores only those. Because the
+passphrase is a root-only secret under `/run/secrets`, every one of these runs
+borg as root, and borg restores each file's owner by name — so a restore under
+your home comes back belonging to you.
+
 ## Quick administration
 
 ```sh
