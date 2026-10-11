@@ -8,26 +8,34 @@ let
   niriEnabled = pkgs.stdenv.hostPlatform.isLinux && config.wayland.windowManager.niri.enable;
 in
 {
+  # Everything below assumes DankMaterialShell: the `dms ipc` binds and the
+  # `include optional=true "dms/*.kdl"` fragments have nothing to talk to
+  # without it. So the session carries the shell rather than each niri host
+  # opting in.
+  #
+  # A plain value, not `mkDefault`: every mirrored `toua.programs` entry from
+  # `osConfig` is already `mkDefault`, so a default here would tie with the
+  # host's own value and conflict instead of losing to it.
+  toua.programs.dms.enable = lib.mkIf niriEnabled true;
+
   # Wayland/Linux-only, gated on the same flag as the session: otherwise a Darwin
   # host pulls in `niri` and friends. gamescope is not here: it belongs
   # to the gaming group, whose system wrapper carries cap_sys_nice, and a plain
   # package in this earlier PATH entry would shadow it.
   #
-  # The bar, the notification daemon, idle/lock timers, clipboard history and the
-  # wallpaper are DankMaterialShell's now — see ./dms.nix — so waybar, mako,
-  # swayidle, fuzzel, cliphist and swaybg are gone from this list.
+  # The bar, the notification daemon, idle/lock timers, clipboard history, the
+  # wallpaper and the network, audio and logout applets are DankMaterialShell's
+  # now — see ./dms.nix — so waybar, mako, swayidle, fuzzel, cliphist, swaybg,
+  # networkmanagerapplet, pavucontrol and wlogout are gone from this list.
   home.packages = lib.mkIf niriEnabled (
     with pkgs;
     [
       # keep-sorted start
       brightnessctl # backlight control for dimming
       labwc
-      networkmanagerapplet
-      pavucontrol # volume control
       playerctl # MPRIS media key control
-      wayshot # screenshot tool
+      wayshot # screenshot tool — Mod+Print's backend until DMS's own screenshot IPC is known
       wl-clipboard # wl-copy/wl-paste: Mod+Print pipes a screenshot into the clipboard
-      wlogout # styled logout menu
       xwayland-run
       # keep-sorted end
     ]
@@ -98,7 +106,7 @@ in
           MOZ_ENABLE_WAYLAND "1"
           QT_QPA_PLATFORM "wayland;xcb"
           NIXOS_OZONE_WL "1"
-          NO_AT_BRIDGE "1" // silence "AT-SPI: Error retrieving accessibility bus address" for GTK apps (wlogout, etc.)
+          NO_AT_BRIDGE "1" // silence "AT-SPI: Error retrieving accessibility bus address" for GTK apps (blueman, Firefox, etc.)
       }
 
       // Screenshot save path
@@ -194,9 +202,6 @@ in
           XF86AudioNext         { spawn "playerctl" "--player=spotatui" "next"; }
           XF86AudioPrev         { spawn "playerctl" "--player=spotatui" "previous"; }
           XF86PowerOff          { spawn "screenshot"; }
-
-          // ── Session ──────────────────────────────────
-          Mod+Shift+Q { spawn "wlogout"; }
       }
 
       // ── DankMaterialShell fragments ──────────────────

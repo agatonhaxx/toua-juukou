@@ -2,11 +2,15 @@
 
 ## Personal
 
-- no pre commit!
 - remove caps entirely from esc
-- fix wallpaper repo as input
 - fix scroll
-- media services
+- caldav on wall-e radicale or baikal
+- calino on phone
+- dank calendar on desktop?
+- chromium settings
+- vicinae on linux instead of fuzzy and dms thingy
+- bookmarks, calendar and contacts backup via borgbackup
+- wayshot + Mod+Print -> dms screenshot ipc, once dms is running
 
 ## Repo review leftovers
 
