@@ -116,10 +116,10 @@ in
                 mailAddresses = [ "glenn@huxe.eu" ];
                 groups = vaultwardenGroups;
               };
-              eek = {
-                displayName = "eek";
-                legalName = "eek";
-                mailAddresses = [ "eek@huxe.eu" ];
+              svs = {
+                displayName = "svs";
+                legalName = "glenn";
+                mailAddresses = [ "svs@huxe.eu" ];
                 groups = vaultwardenGroups;
               };
             };

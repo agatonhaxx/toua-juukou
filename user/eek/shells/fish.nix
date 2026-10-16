@@ -18,6 +18,7 @@
 
       shellAliases = {
         "l" = "eza";
+        "workssh" = "ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes";
       };
 
       plugins = [

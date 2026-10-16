@@ -32,8 +32,8 @@
         { key = "l", mods = "ALT", action = act.ActivatePaneDirection "Right" },
 
         -- vim-like splits: "|" splits left/right, "-" splits top/bottom
-        { key = "|", mods = "ALT", action = act.SplitHorizontal { domain = "CurrentPaneDomain" } },
-        { key = "-", mods = "ALT", action = act.SplitVertical { domain = "CurrentPaneDomain" } },
+        { key = "v", mods = "ALT", action = act.SplitHorizontal { domain = "CurrentPaneDomain" } },
+        { key = "s", mods = "ALT", action = act.SplitVertical { domain = "CurrentPaneDomain" } },
 
         -- vim-like pane resizing
         { key = "h", mods = "ALT|SHIFT", action = act.AdjustPaneSize { "Left", 3 } },

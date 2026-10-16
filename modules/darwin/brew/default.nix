@@ -16,19 +16,6 @@ in
   # file, so they are imported here.
   imports = importDir { dir = ./.; };
 
-  # A machine installation cannot be toggled from Home Manager, so the host's
-  # selection is mapped to package names here.
-  homebrew.casks = mkEnabledPackages programs {
-    bitwarden = "bitwarden";
-    chromium = "google-chrome";
-    discord = "discord";
-    sf-symbols = "sf-symbols";
-  };
-
-  homebrew.brews = mkEnabledPackages programs {
-    coreutils = "coreutils";
-  };
-
   config = lib.mkIf cfg.enable {
     # nix-homebrew owns the installation; nix-darwin's Homebrew module owns
     # the declarative taps, formulae, and casks supplied by the host.
@@ -41,6 +28,20 @@ in
 
     homebrew = {
       enable = true;
+
+      # A machine installation cannot be toggled from Home Manager, so the host's
+      # selection is mapped to package names here.
+      casks = mkEnabledPackages programs {
+        bitwarden = "bitwarden";
+        chromium = "google-chrome";
+        discord = "discord";
+        sf-symbols = "sf-symbols";
+      };
+
+      brews = mkEnabledPackages programs {
+        coreutils = "coreutils";
+      };
+
       onActivation = {
         autoUpdate = true;
         cleanup = "uninstall";
