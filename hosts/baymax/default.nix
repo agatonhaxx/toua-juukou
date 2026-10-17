@@ -110,6 +110,10 @@ in
           completeDir = "/data/baymax/downloads";
         };
 
+        # The requests UI for Jellyfin; its database lives beside the services
+        # it talks to.
+        seerr.dataDir = "/data/baymax/qt/seerr";
+
         slskd = {
           dataDir = "/data/baymax/qt/slskd";
 

@@ -19,6 +19,7 @@ let
     "qbittorrent"
     "radarr"
     "sabnzbd"
+    "seerr"
     "slskd"
     "sonarr"
     # keep-sorted end

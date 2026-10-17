@@ -116,6 +116,7 @@
       qbittorrent.enable = true;
       radarr.enable = true;
       sabnzbd.enable = true;
+      seerr.enable = true;
       slskd.enable = true;
       sonarr.enable = true;
       # keep-sorted end
