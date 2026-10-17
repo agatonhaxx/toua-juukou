@@ -8,6 +8,7 @@
     ./bluetooth.nix
     ./chromium.nix
     ./desktop.nix
+    ./games/bar.nix
     ./gaming.nix
     ./options.nix
     ./packages.nix

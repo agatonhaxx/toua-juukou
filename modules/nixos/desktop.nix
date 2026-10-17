@@ -65,6 +65,21 @@ in
 
     (lib.mkIf cfg.desktop.niri.enable {
       programs.niri.enable = true;
+
+      # `caps:escape` cannot switch Caps Lock off here: the `jp` layout maps CAPS
+      # back to `Caps_Lock`, which puts it in the keymap's Lock modifier, so each
+      # press emits Escape and still toggles Caps. keyd remaps below the
+      # compositor, so no CAPS keycode reaches niri's keymap at all. It grabs
+      # every keyboard and re-emits through uinput, which is why no device ID is
+      # needed.
+      services.keyd = {
+        enable = true;
+
+        keyboards.default = {
+          ids = [ "*" ];
+          settings.main.capslock = "esc";
+        };
+      };
     })
 
     # Shared by any graphical session: X11 for XWayland and X-only apps, and

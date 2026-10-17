@@ -89,10 +89,17 @@ deploy host target *args:
       rebuild=(nix run nixpkgs#nixos-rebuild-ng --)
     fi
 
+    # Build locally and push. wall-e is a Hetzner VPS that cannot carry its own
+    # build, and the Mac cannot cross-build x86_64-linux, so it keeps building
+    # on the target.
+    build_args=()
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      build_args=(--build-host "{{ target }}")
+    fi
+
     "${rebuild[@]}" switch \
       --flake "{{ flake }}#{{ host }}" \
-      --build-host "{{ target }}" \
-      --target-host "{{ target }}" {{ args }}
+      --target-host "{{ target }}" "${build_args[@]}" {{ args }}
 
 # Provision wall-e from scratch. This applies disko and wipes its target disk.
 [group("rebuild")]

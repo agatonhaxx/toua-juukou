@@ -54,6 +54,7 @@ in
 
   toua = lib.mkMerge [
     (mkDefaults groups.cli)
+    (mkDefaults groups.security)
     (mkDefaults groups.gui)
     (mkDefaults groups.network)
 
@@ -69,6 +70,7 @@ in
     (mkDefaults {
       programs.dms.enable = true;
       programs.niri.enable = true;
+      games.bar.enable = true;
       desktop.gnome.enable = true;
       desktop.niri.enable = true;
       displayManager.greeter = "dms";

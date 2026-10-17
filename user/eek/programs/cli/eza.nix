@@ -6,9 +6,9 @@
 
     icons = "auto";
 
+    # Extra options land on the `eza` alias itself, so anything here is also in
+    # `ls`/`ll` — keep it to things that do not hide columns.
     extraOptions = [
-      "--no-permissions"
-      "--no-user"
       "--ignore-glob"
       ".git"
     ];

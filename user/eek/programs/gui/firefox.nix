@@ -55,27 +55,15 @@
           installation_mode = "normal_installed";
         };
 
-        # React Developer Tools
-        "@react-devtools" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/react-devtools/latest.xpi";
-          installation_mode = "normal_installed";
-        };
-
-        # Duplicate Tabs Closer
-        "jid0-RvYT2rGWfM8q5yWxIxAHYAeo5Qg@jetpack" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/duplicate-tabs-closer/latest.xpi";
+        # Rename Tab Title
+        "renametabtitle@mozilla.org" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/rename-tab-title/latest.xpi";
           installation_mode = "normal_installed";
         };
 
         # Bitwarden
         "{446900e4-71c2-419f-a6a7-df9c091e268b}" = {
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi";
-          installation_mode = "normal_installed";
-        };
-
-        # qui (qBittorrent integration)
-        "qui@s0up4200" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/qui/latest.xpi";
           installation_mode = "normal_installed";
         };
 

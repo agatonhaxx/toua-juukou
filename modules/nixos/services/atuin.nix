@@ -30,7 +30,7 @@ in
         services.atuin = {
           enable = true;
           inherit (cfg) host port;
-          openRegistration = false;
+          openRegistration = true;
           maxHistoryLength = 1024 * 16;
         };
 

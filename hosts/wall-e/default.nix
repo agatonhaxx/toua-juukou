@@ -35,10 +35,16 @@ in
     # wall-e is a headless service host. Keep the shared terminal setup, but do
     # not pull graphical applications or media players into its closure.
     (mkDefaults groups.cli)
+    (mkDefaults groups.security)
     (mkDefaults groups.network)
     (mkDefaults groups.server)
 
     {
+      programs = {
+        yubikey-manager.enable = false;
+        age-plugin-yubikey.enable = true;
+        bitwarden-cli.enable = true;
+      };
       inherit domain;
       email = "glenn@huxe.eu";
 

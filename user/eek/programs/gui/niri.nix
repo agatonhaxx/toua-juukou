@@ -55,7 +55,10 @@ in
           keyboard {
               xkb {
                   layout "us,se,jp"
-                  options "grp:ctrl_space_toggle,caps:escape"
+                  // CAPS is remapped to Escape by keyd in modules/nixos/desktop.nix,
+                  // below the compositor; leaving `caps:escape` here would only
+                  // reintroduce the Lock-modifier bug from the `jp` layout.
+                  options "grp:ctrl_space_toggle"
               }
           repeat-delay 300
           repeat-rate 35
@@ -76,6 +79,16 @@ in
           draw-border-with-background false
           geometry-corner-radius 12
           clip-to-geometry true
+      }
+
+      // The Bitwarden extension popup floats in the top-right corner. Both
+      // conditions belong in one `match` node: separate `match` nodes are
+      // OR-ed, which would float every Chromium or Firefox window.
+      window-rule {
+          match app-id=r#"^chromium-browser$"# title=r#"^Bitwarden"#
+          match app-id=r#"^firefox$"# title=r#"^Bitwarden"#
+          open-floating true
+          default-floating-position x=10 y=10 relative-to="top-right"
       }
 
       window-rule {
@@ -157,18 +170,14 @@ in
           // of the cluster match the two axes on screen.
           Mod+H { focus-column-left; }
           Mod+L { focus-column-right; }
-          Mod+J { focus-workspace-down; }
-          Mod+K { focus-workspace-up; }
-
-          // ── Focus window within a column ─────────────
-          Mod+Ctrl+J { focus-window-down; }
-          Mod+Ctrl+K { focus-window-up; }
+          Mod+J { focus-window-or-workspace-down; }
+          Mod+K { focus-window-or-workspace-up; }
 
           // ── Move windows ─────────────────────────────
           Mod+Shift+H { move-column-left; }
           Mod+Shift+L { move-column-right; }
-          Mod+Shift+J { move-window-down; }
-          Mod+Shift+K { move-window-up; }
+          Mod+Shift+J { move-window-down-or-to-workspace-down; }
+          Mod+Shift+K { move-window-up-or-to-workspace-up; }
 
           // ── Workspaces (2 per monitor) ───────────────
           // Indices are per output, so 1 and 2 are the same two desktops on

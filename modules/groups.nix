@@ -20,7 +20,6 @@
     ripgrep.enable = true;
     starship.enable = true;
     yazi.enable = true;
-    yubikey-manager.enable = true;
     zk.enable = true;
     zoxide.enable = true;
     zsh.enable = true;
@@ -49,6 +48,18 @@
     kubectl.enable = true;
   };
 
+  security.programs = {
+    # keep-sorted start
+    age-plugin-yubikey.enable = true;
+    age.enable = true;
+    bitwarden-cli.enable = true;
+    htpasswd.enable = true;
+    openssl.enable = true;
+    sops.enable = true;
+    yubikey-manager.enable = true;
+    # keep-sorted end
+  };
+
   gui = {
     graphical.enable = true;
     fonts.enable = true;
@@ -56,7 +67,7 @@
       # Left off: whether a machine has a radio is a hardware fact, so a host
       # opts in rather than the group.
       # keep-sorted start
-      blueman.enable = false;
+      blueman.enable = true;
       bluetooth.enable = false;
       chromium.enable = true;
       discord.enable = true;
@@ -71,6 +82,10 @@
   # the machine rather than from a user's session — the larger `vm.max_map_count`,
   # AppImage binfmt and the sched-ext scheduler — is not a program of its own, so
   # it hangs off `steam` in modules/nixos/gaming.nix.
+
+  # The latest BYAR-Chobby AppImage in the primary user's ~/games.
+  gaming.games.bar.enable = true;
+
   gaming.programs = {
     # keep-sorted start
     gamemode.enable = true;

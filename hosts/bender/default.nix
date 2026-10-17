@@ -15,6 +15,7 @@ in
   # and the GNOME/niri desktop stack.
   toua = lib.mkMerge [
     (mkDefaults groups.cli)
+    (mkDefaults groups.security)
     (mkDefaults groups.gui)
 
     # Only the programs: the services under `media` need a data volume and a

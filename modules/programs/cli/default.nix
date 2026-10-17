@@ -47,6 +47,9 @@ in
 
   home.packages = mkEnabledPackages cfg {
     # keep-sorted start
+    age = pkgs.age;
+    age-plugin-yubikey = pkgs.age-plugin-yubikey;
+    bitwarden-cli = pkgs.bitwarden-cli;
     coreutils = pkgs.uutils-coreutils-noprefix;
     curl = pkgs.curl;
     dust = pkgs.dust;
@@ -54,12 +57,15 @@ in
     flow = pkgs.flow;
     gcloud = pkgs.google-cloud-sdk;
     helm = pkgs.kubernetes-helm;
+    htpasswd = pkgs.apacheHttpd;
     jless = pkgs.jless;
     jnv = pkgs.jnv;
     just = pkgs.just;
     kubectl = pkgs.kubectl;
     nix-diff = pkgs.nix-diff;
+    openssl = pkgs.openssl;
     ouch = pkgs.ouch;
+    sops = pkgs.sops;
     yq = pkgs.yq-go;
     yubikey-manager = pkgs.yubikey-manager;
     # keep-sorted end
