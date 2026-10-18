@@ -24,6 +24,19 @@ let
     "sonarr"
     # keep-sorted end
   ];
+
+  # One Gatus endpoint, watching the name a client would use, so DNS, the
+  # certificate, nginx and the tailnet route are all part of the check.
+  # `[CONNECTED]` is stated first because a failed request leaves the status at
+  # 0, which a `< 500` condition would otherwise accept.
+  check = group: name: url: expected: {
+    inherit group name url;
+
+    conditions = [
+      "[CONNECTED] == true"
+      (if expected == null then "[STATUS] < 500" else "[STATUS] == ${toString expected}")
+    ];
+  };
 in
 {
   imports = [
@@ -54,8 +67,8 @@ in
       # where a service runs, and the host that fronts one states its `domain`
       # and `proxy`. Only a name someone off the tailnet has to resolve needs a
       # Cloudflare A/AAAA record pointing here, and acme's DNS-01 challenge needs
-      # none: the eight tailnet-only names have no public record at all, and the
-      # two public ones are the only entries that do.
+      # none: the tailnet-only names have no public record at all, and only the
+      # public ones do.
       services =
         (lib.genAttrs tailnetServices (name: {
           # headscale's `baseDomain`.
@@ -109,6 +122,43 @@ in
           radicale.proxy = {
             host = "127.0.0.1";
             access = "tailnet";
+          };
+
+          # The status page watches every service a client can reach, through
+          # the same public URLs, so DNS, certificates, nginx and the tailnet
+          # route are all covered. It runs here rather than on baymax, so a
+          # baymax outage is still reported — but nothing outside this host can
+          # report wall-e itself going down.
+          gatus = {
+            domain = "status.local.${domain}";
+
+            proxy = {
+              host = "127.0.0.1";
+              access = "tailnet";
+            };
+
+            endpoints = [
+              # This host.
+              (check "wall-e" "headscale" "https://headscale.${domain}/health" 200)
+              (check "wall-e" "kanidm" "https://sso.${domain}/status" 200)
+              (check "wall-e" "vaultwarden" "https://vault.${domain}/alive" 200)
+              (check "wall-e" "atuin" "https://atuin.${domain}/" null)
+              (check "wall-e" "radicale" "https://dav.local.${domain}/" null)
+
+              # baymax, over the tailnet. `/` is checked rather than a health
+              # path where the service has none a release keeps stable — a
+              # login page below 500 still means it is serving.
+              (check "baymax" "jellyfin" "https://stream.${domain}/health" 200)
+              (check "baymax" "immich" "https://pics.${domain}/api/server/ping" 200)
+              (check "baymax" "sonarr" "https://sonarr.local.${domain}/ping" 200)
+              (check "baymax" "radarr" "https://radarr.local.${domain}/ping" 200)
+              (check "baymax" "seerr" "https://seerr.local.${domain}/api/v1/status" 200)
+              (check "baymax" "prowlarr" "https://prowlarr.local.${domain}/" null)
+              (check "baymax" "qbittorrent" "https://qbittorrent.local.${domain}/" null)
+              (check "baymax" "sabnzbd" "https://sabnzbd.local.${domain}/" null)
+              (check "baymax" "navidrome" "https://music.local.${domain}/" null)
+              (check "baymax" "slskd" "https://slskd.local.${domain}/" null)
+            ];
           };
         };
     }

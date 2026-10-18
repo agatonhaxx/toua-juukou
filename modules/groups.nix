@@ -145,6 +145,7 @@
     acme.enable = true;
     atuin.enable = true;
     borgbackup.enable = true;
+    gatus.enable = true;
     kanidm.enable = true;
     nginx.enable = true;
     radicale.enable = true;
