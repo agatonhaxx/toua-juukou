@@ -15,8 +15,6 @@
     NVIM_CONFIG = "$GITDIR/eek/nvim-eek";
   }
   // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-    # Placeholder: Bitwarden desktop's SSH agent socket. Confirm the group
-    # container path against your install before relying on it.
-    SSH_AUTH_SOCK = "${config.home.homeDirectory}/Library/Group Containers/REPLACE-ME.com.bitwarden.desktop/agent.sock";
+    SSH_AUTH_SOCK = "${config.home.homeDirectory}/.bitwarden-ssh-agent.sock";
   };
 }

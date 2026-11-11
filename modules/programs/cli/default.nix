@@ -55,7 +55,7 @@ in
     dust = pkgs.dust;
     ffmpeg = pkgs.ffmpeg;
     flow = pkgs.flow;
-    gcloud = pkgs.google-cloud-sdk;
+    # gcloud = pkgs.google-cloud-sdk;
     helm = pkgs.kubernetes-helm;
     htpasswd = pkgs.apacheHttpd;
     jless = pkgs.jless;

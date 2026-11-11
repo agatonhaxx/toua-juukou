@@ -36,6 +36,7 @@ in
         chromium = "google-chrome";
         discord = "discord";
         sf-symbols = "sf-symbols";
+        gcloud = "gcloud-cli";
       };
 
       brews = mkEnabledPackages programs {

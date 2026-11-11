@@ -28,7 +28,7 @@
 
   dev.programs = {
     # keep-sorted start
-    gcloud.enable = true;
+    # gcloud.enable = true;
     jless.enable = true;
     jnv.enable = true;
     jq.enable = true;
@@ -125,6 +125,7 @@
 
   mac.programs = {
     bitwarden.enable = true;
+    gcloud.enable = true;
     raycast.enable = true;
     sf-symbols.enable = true;
   };

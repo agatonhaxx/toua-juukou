@@ -10,7 +10,6 @@
       auto_sync = true;
       sync_frequency = "5m";
       sync_address = "https://atuin.huxe.eu";
-      search_mode = "prefix";
     };
   };
 }
